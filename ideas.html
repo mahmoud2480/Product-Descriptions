@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>أفكار الموظف – التعاون والإبداع</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+
+    header {
+      background:#0d6efd; color:#fff; padding:10px 16px;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .header-top {
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    header h1 { margin:0; font-size:1.1rem; }
+    header a{color:#fff;}
+
+    .nav-buttons {
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .nav-buttons button {
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.7);
+      background:rgba(255,255,255,0.1);
+      color:#fff;
+      font-family:"Cairo",system-ui,sans-serif;
+      font-size:0.8rem;
+      cursor:pointer;
+    }
+    .nav-buttons button:hover {
+      background:rgba(255,255,255,0.25);
+    }
+    .nav-buttons button.active {
+      background:#fff;
+      color:#0d6efd;
+    }
+
+    .layout {
+      display:grid; grid-template-columns: 1.1fr 1.4fr; gap:10px; padding:10px;
+    }
+    @media (max-width:900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .card {
+      background:#fff; border-radius:14px; padding:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+    h2 { margin:0 0 8px; font-size:1rem; }
+
+    label { display:block; margin-top:6px; font-size:0.85rem; }
+    textarea {
+      width:100%; min-height:120px; border-radius:10px;
+      border:1px solid #ddd; font-family:inherit; font-size:0.9rem;
+      padding:6px 8px;
+    }
+    button {
+      margin-top:8px; padding:7px 12px; border-radius:10px;
+      border:none; background:#0d6efd; color:#fff;
+      font-family:inherit; font-size:0.9rem; cursor:pointer;
+    }
+
+    .msg {
+      margin-top:4px; font-size:0.8rem;
+    }
+
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+    th, td {
+      border:1px solid #eee; padding:4px 6px; text-align:center;
+    }
+    th { background:#f1f3f7; }
+
+    .filters {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+      font-size:0.8rem;
+    }
+    .filters label { font-size:0.75rem; color:#4b5563; }
+    .filters select {
+      padding:4px 6px;
+      border-radius:8px;
+      border:1px solid #ddd;
+      font-family:inherit;
+      font-size:0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>أفكار الموظف – التعاون والإبداع</h1>
+      <div>
+        <span id="empName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
+    </div>
+    <div class="nav-buttons" id="navButtons"></div>
+  </header>
+
+  <div class="layout">
+    <!-- نموذج إضافة فكرة -->
+    <div class="card">
+      <h2>إضافة فكرة / اقتراح</h2>
+      <p style="font-size:0.8rem;color:#4b5563;margin-top:0;">
+        كل فكرة مقبولة تُحسب كنقاط ضمن بند "التعاون والإبداع" في التقييم الشهري.
+      </p>
+      <label>نص الفكرة / الاقتراح</label>
+      <textarea id="ideaText" placeholder="اكتب هنا الفكرة أو الاقتراح أو التحسين الذي قمت به..."></textarea>
+
+      <button onclick="addIdea()">إرسال الفكرة</button>
+      <div class="msg" id="ideaMsg"></div>
+    </div>
+
+    <!-- قائمة الأفكار السابقة -->
+    <div class="card">
+      <h2>أفكاري المسجلة</h2>
+
+      <div class="filters">
+        <div>
+          <label>الشهر</label><br/>
+          <select id="filterMonth" onchange="loadIdeas()"></select>
+        </div>
+        <div>
+          <label>الحالة</label><br/>
+          <select id="filterStatus" onchange="loadIdeas()">
+            <option value="">الكل</option>
+            <option value="جديد">جديد</option>
+            <option value="معتمد">معتمد</option>
+            <option value="مرفوض">مرفوض</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="max-height:calc(100vh - 190px);overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>الفكرة</th>
+              <th>النقاط</th>
+              <th>الحالة</th>
+              <th>ملاحظات الإدارة</th>
+            </tr>
+          </thead>
+          <tbody id="ideasBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzun10zsjO4I2xhhvo_j09n9QL6Y_q0ssJ9wisGfK7f1Q8ORcbEe3vjqYCZ5MSDp_3I/exec";
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+      const text = await res.text();
+      return JSON.parse(text);
+    }
+
+    let user = null;
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+      const rolesText = user.role.toString().toUpperCase();
+      return rolesText.includes(code);
+    }
+
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
+      ];
+
+      links.forEach(item => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
+            window.location.href = item.href;
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
+      const now = new Date();
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ('0' + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.insertBefore(allOpt, sel.firstChild);
+      sel.value = "";
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+      document.getElementById("empName").textContent = user.name + " (" + user.employeeCode + ")";
+      renderNav("ideas.html");
+      initMonthFilter();
+      loadIdeas();
+    }
+
+    async function addIdea() {
+      const msg = document.getElementById("ideaMsg");
+      const txtEl = document.getElementById("ideaText");
+      const text = txtEl.value.trim();
+      if (!text) {
+        msg.style.color = "#b91c1c";
+        msg.textContent = "يرجى كتابة الفكرة أولاً.";
+        return;
+      }
+
+      msg.style.color = "#374151";
+      msg.textContent = "...جاري الإرسال";
+
+      try {
+        const res = await callApi("addIdea", {
+          employeeCode: user.employeeCode,
+          employeeName: user.name,
+          text: text
+        });
+        if (res.success) {
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم تسجيل الفكرة بنجاح.";
+          txtEl.value = "";
+          loadIdeas();
+        } else {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل التسجيل.";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
+      }
+    }
+
+    async function loadIdeas() {
+      const tbody = document.getElementById("ideasBody");
+      tbody.innerHTML = "<tr><td colspan='6'>...جاري التحميل</td></tr>";
+
+      const monthKey = document.getElementById("filterMonth").value || null;
+      const status = document.getElementById("filterStatus").value || null;
+
+      try {
+        const res = await callApi("listIdeas", {
+          filters: {
+            employeeCode: user.employeeCode,
+            monthKey: monthKey,
+            status: status
+          }
+        });
+        const list = (res && res.ideas) || [];
+
+        if (!list.length) {
+          tbody.innerHTML = "<tr><td colspan='6'>لا توجد أفكار مسجلة</td></tr>";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        list.forEach((idea) => {
+          const tr = document.createElement("tr");
+          const d = idea.Date ? new Date(idea.Date).toLocaleDateString("ar-SY") : "";
+          tr.innerHTML = `
+            <td>${idea.IdeaID}</td>
+            <td>${d}</td>
+            <td style="text-align:right;">${idea.IdeaText || ""}</td>
+            <td>${idea.Points || 0}</td>
+            <td>${idea.Status || "جديد"}</td>
+            <td style="text-align:right;">${idea.AdminNotes || ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='6'>خطأ في تحميل البيانات</td></tr>";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
