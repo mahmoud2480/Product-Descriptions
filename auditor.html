@@ -98,14 +98,24 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
-    async function callApi(action, payload) {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ action, payload })
-      });
-      return await res.json();
-    }
+  async function callApi(action, payload) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    // مهم: نجعل النوع text/plain لتجنب طلب OPTIONS (preflight)
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, payload })
+  });
+
+  // نقرأ الرد كنص ثم نحوله لـ JSON
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("خطأ في parsing JSON من السيرفر:", text, e);
+    throw e;
+  }
+}
+
 
     let user = null;
     let currentTaskId = null;
