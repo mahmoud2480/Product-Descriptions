@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>واجهة التقييم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+    header {
+      background:#0d6efd; color:#fff; padding:10px 16px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    header h1 { margin:0; font-size:1.1rem; }
+    header a{color:#fff;}
+    .container { padding:10px; }
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-top:8px; }
+    th, td { border:1px solid #eee; padding:4px 6px; text-align:center; }
+    th { background:#f1f3f7; }
+    .filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+    select { padding:4px 6px; border-radius:8px; border:1px solid #ddd; font-family:inherit; font-size:0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>واجهة التقييم الشهري</h1>
+    <div>
+      <span id="evalName"></span> |
+      <a href="#" onclick="logout()">تسجيل الخروج</a>
+    </div>
+  </header>
+  <div class="container">
+    <div class="filters">
+      <div>
+        <label>الشهر</label><br/>
+        <select id="monthFilter" onchange="loadEvaluation()"></select>
+      </div>
+      <div>
+        <label>ترتيب حسب</label><br/>
+        <select id="sortBy" onchange="renderTable(lastData)">
+          <option value="totalScore">الدرجة النهائية</option>
+          <option value="qualityScore">الجودة</option>
+          <option value="productCountScore">عدد المنتجات</option>
+          <option value="speedScore">السرعة</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>الترتيب</th>
+          <th>الموظف</th>
+          <th>الجودة 35%</th>
+          <th>عدد المنتجات 15%</th>
+          <th>تنوع المنتجات 10%</th>
+          <th>صعوبة المنتجات 5%</th>
+          <th>السرعة 15%</th>
+          <th>التعاون والإبداع 10%</th>
+          <th>الاختبار الشهري 10%</th>
+          <th>الدرجة النهائية 100%</th>
+        </tr>
+      </thead>
+      <tbody id="evalBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ action, payload })
+      });
+      return await res.json();
+    }
+
+    let user = null;
+    let lastData = [];
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+      document.getElementById("evalName").textContent = user.name + " (" + user.role + ")";
+
+      const sel = document.getElementById("monthFilter");
+      const now = new Date();
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ('0' + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+      loadEvaluation();
+    }
+
+    async function loadEvaluation() {
+      const monthKey = document.getElementById("monthFilter").value;
+      const tbody = document.getElementById("evalBody");
+      tbody.innerHTML = '<tr><td colspan="10">...جاري التحميل</td></tr>';
+      try {
+        const data = await callApi("getEvaluation", { monthKey });
+        lastData = data || [];
+        renderTable(lastData);
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="10">خطأ في تحميل البيانات</td></tr>';
+      }
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById("evalBody");
+      tbody.innerHTML = "";
+
+      const sortBy = document.getElementById("sortBy").value;
+      data = data.slice().sort((a,b) => (b[sortBy]||0) - (a[sortBy]||0));
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="10">لا توجد بيانات</td></tr>';
+        return;
+      }
+
+      data.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td>${r.employeeName}</td>
+          <td>${r.qualityScore.toFixed(2)}</td>
+          <td>${r.productCountScore.toFixed(2)}</td>
+          <td>${r.varietyScore.toFixed(2)}</td>
+          <td>${r.diffScore.toFixed(2)}</td>
+          <td>${r.speedScore.toFixed(2)}</td>
+          <td>${r.ideaScore.toFixed(2)}</td>
+          <td>${r.testScore.toFixed(2)}</td>
+          <td><strong>${r.totalScore.toFixed(2)}</strong></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
