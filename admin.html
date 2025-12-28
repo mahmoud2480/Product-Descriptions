@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة الإدارة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+    header {
+      background:#0d6efd; color:#fff; padding:10px 16px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    header h1 { margin:0; font-size:1.1rem; }
+    header a{color:#fff;}
+    .container { padding:10px; display:grid; gap:10px; grid-template-columns:1.2fr 1.8fr; }
+    @media (max-width:900px) {
+      .container { grid-template-columns:1fr; }
+    }
+    .card { background:#fff; border-radius:14px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+    h2 { margin:0 0 8px; font-size:1rem; }
+    label { display:block; margin-top:6px; font-size:0.85rem; }
+    input, textarea {
+      width:100%; padding:7px 8px; border-radius:10px; border:1px solid #ddd;
+      font-family:inherit; font-size:0.85rem;
+    }
+    textarea { min-height:60px; resize:vertical; }
+    button {
+      margin-top:8px; padding:7px 10px; border-radius:10px;
+      border:none; background:#0d6efd; color:#fff;
+      font-family:inherit; font-size:0.85rem; cursor:pointer;
+    }
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-top:6px; }
+    th, td { border:1px solid #eee; padding:4px 6px; }
+    th { background:#f1f3f7; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>لوحة الإدارة</h1>
+    <div>
+      <span id="adminName"></span> |
+      <a href="#" onclick="logout()">تسجيل الخروج</a>
+    </div>
+  </header>
+  <div class="container">
+    <div class="card">
+      <h2>إضافة قاعدة جديدة</h2>
+      <label>نوع القاعدة</label>
+      <input id="ruleType" placeholder="مثال: رفع منتج / صور / عامة" />
+
+      <label>الفئات (مفصولة بفاصلة)</label>
+      <input id="ruleCats" placeholder="ملابس, شتوي, رجالي" />
+
+      <label>عنوان القاعدة</label>
+      <input id="ruleTitle" />
+
+      <label>تفاصيل القاعدة</label>
+      <textarea id="ruleDetails"></textarea>
+
+      <label>أمثلة / روابط</label>
+      <textarea id="ruleExamples"></textarea>
+
+      <button onclick="saveRule()">حفظ القاعدة</button>
+      <div id="ruleMsg" style="margin-top:6px;font-size:0.8rem;color:#0a7;"></div>
+    </div>
+
+    <div class="card">
+      <h2>أحدث القواعد</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>نوع</th><th>عنوان</th><th>فئات</th>
+          </tr>
+        </thead>
+        <tbody id="rulesBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ action, payload })
+      });
+      return await res.json();
+    }
+
+    let user = null;
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+      document.getElementById("adminName").textContent = user.name + " (" + user.role + ")";
+      loadRulesList();
+    }
+
+    async function saveRule() {
+      const type = document.getElementById("ruleType").value;
+      const cats = document.getElementById("ruleCats").value;
+      const title = document.getElementById("ruleTitle").value;
+      const details = document.getElementById("ruleDetails").value;
+      const examples = document.getElementById("ruleExamples").value;
+      const msg = document.getElementById("ruleMsg");
+
+      if (!title || !details) {
+        msg.textContent = "يجب إدخال العنوان والتفاصيل";
+        return;
+      }
+
+      msg.textContent = "...جاري الحفظ";
+
+      const ruleObj = {
+        type,
+        categories: cats ? cats.split(",").map(s => s.trim()) : [],
+        title,
+        details,
+        examples
+      };
+
+      try {
+        const res = await callApi("addRule", { ruleObj, adminName: user.name });
+        if (res.success) {
+          msg.textContent = "تم حفظ القاعدة رقم " + res.ruleId;
+          loadRulesList();
+        } else {
+          msg.textContent = "فشل الحفظ";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "خطأ في الحفظ";
+      }
+    }
+
+    async function loadRulesList() {
+      const tbody = document.getElementById("rulesBody");
+      tbody.innerHTML = '<tr><td colspan="4">...جاري التحميل</td></tr>';
+      try {
+        const res = await callApi("searchRules", { query: "" });
+        tbody.innerHTML = "";
+        if (!res || !res.length) {
+          tbody.innerHTML = '<tr><td colspan="4">لا توجد قواعد</td></tr>';
+          return;
+        }
+        res.slice(-20).forEach(r => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${r.RuleID}</td>
+            <td>${r.RuleType || ""}</td>
+            <td>${r.Title || ""}</td>
+            <td>${r.Categories || ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="4">خطأ في تحميل القواعد</td></tr>';
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
