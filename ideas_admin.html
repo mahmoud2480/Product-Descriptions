@@ -154,7 +154,9 @@
   </div>
 
   <script>
-https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec
+    // ✅ تعريف رابط الـ API بدل السطر الخام
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -240,7 +242,8 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
         window.location.href = "employee.html";
         return;
       }
-      document.getElementById("adminName").textContent = user.name + " (" + user.role + ")";
+      document.getElementById("adminName").textContent =
+        user.name + " (" + user.role + ")";
       renderNav("ideas_admin.html");
       initMonthFilter();
       loadIdeas();
@@ -298,14 +301,17 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
       const tbody = document.getElementById("ideasBody");
       if (!allIdeas.length) {
         tbody.innerHTML = "<tr><td colspan='6'>لا توجد أفكار</td></tr>";
-        document.getElementById("ideaDetails").textContent = "اختر فكرة من الجدول لعرض التفاصيل.";
+        document.getElementById("ideaDetails").textContent =
+          "اختر فكرة من الجدول لعرض التفاصيل.";
         return;
       }
 
       tbody.innerHTML = "";
       allIdeas.forEach(idea => {
         const tr = document.createElement("tr");
-        const d = idea.Date ? new Date(idea.Date).toLocaleDateString("ar-SY") : "";
+        const d = idea.Date
+          ? new Date(idea.Date).toLocaleDateString("ar-SY")
+          : "";
         tr.innerHTML = `
           <td>${idea.IdeaID}</td>
           <td>${d}</td>
@@ -327,7 +333,9 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
         container.textContent = "لم يتم العثور على الفكرة.";
         return;
       }
-      const d = idea.Date ? new Date(idea.Date).toLocaleString("ar-SY") : "";
+      const d = idea.Date
+        ? new Date(idea.Date).toLocaleString("ar-SY")
+        : "";
 
       container.innerHTML = `
         <div><strong>الموظف:</strong> ${idea.EmployeeName || ""} (${idea.EmployeeCode || ""})</div>
@@ -348,7 +356,7 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
         <label>ملاحظات الإدارة</label>
         <textarea id="ideaAdminNotes">${idea.AdminNotes || ""}</textarea>
 
-        <button onclick="saveIdea()" >حفظ التعديلات</button>
+        <button onclick="saveIdea()">حفظ التعديلات</button>
         <button class="danger" onclick="deleteIdeaClick()">حذف الفكرة</button>
         <div class="msg" id="ideaMsg"></div>
       `;
