@@ -332,12 +332,15 @@
       if (!container) return;
       container.innerHTML = "";
 
-      const links = [
-        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
-        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
-        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" }
-      ];
+const links = [
+  { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
+  { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
+  { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
+  { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+  { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
+  { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
+];
+
 
       links.forEach(item => {
         if (hasRole(item.code)) {
