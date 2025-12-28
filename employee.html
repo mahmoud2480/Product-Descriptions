@@ -87,6 +87,7 @@
       border: 1px solid #ddd;
       font-family: inherit;
       font-size: 0.9rem;
+      box-sizing: border-box;
     }
     textarea { min-height: 60px; resize: vertical; }
     .row { display: flex; gap: 8px; }
@@ -282,7 +283,9 @@
   </div>
 
   <script>
-https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec
+    // ✅ رابط الـ API الصحيح
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -327,32 +330,31 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
       return rolesText.includes(code);
     }
 
-    function renderNav(activeCode) {
+    function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
 
-const links = [
-  { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
-  { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
-  { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
-  { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-  { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
-  { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
-];
-
+      const links = [
+        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",       label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",     label: "إدارة الأفكار", href: "ideas_admin.html" }
+      ];
 
       links.forEach(item => {
-        if (hasRole(item.code)) {
-          const btn = document.createElement("button");
-          btn.textContent = item.label;
-          if (activeCode === item.code) btn.classList.add("active");
-          btn.onclick = () => {
-            if (window.location.pathname.endsWith(item.href)) return;
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
             window.location.href = item.href;
-          };
-          container.appendChild(btn);
-        }
+          }
+        };
+        container.appendChild(btn);
       });
     }
     // ----------------------
@@ -364,11 +366,12 @@ const links = [
         return;
       }
       user = JSON.parse(str);
-      document.getElementById("userName").textContent = user.name + " (" + user.role + ")";
+      document.getElementById("userName").textContent =
+        user.name + " (" + user.role + ")";
       document.getElementById("empCode").value = user.employeeCode;
       document.getElementById("empName").value = user.name;
 
-      renderNav("EMP");
+      renderNav("employee.html");
 
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -402,8 +405,10 @@ const links = [
 
     function onTaskTypeChange() {
       const val = document.getElementById("taskType").value;
-      document.getElementById("branchSection").style.display = (val === "رفع منتج") ? "block" : "none";
-      document.getElementById("assignedSection").style.display = (val === "مهمة موكلة") ? "block" : "none";
+      document.getElementById("branchSection").style.display =
+        (val === "رفع منتج") ? "block" : "none";
+      document.getElementById("assignedSection").style.display =
+        (val === "مهمة موكلة") ? "block" : "none";
     }
 
     // إضافة مهمة جديدة إلى قائمة المهام الحالية (بدون حفظ في الشيت بعد)
@@ -463,7 +468,8 @@ const links = [
     function renderCurrentTasks() {
       const container = document.getElementById("currentTasksContainer");
       if (!currentTasks.length) {
-        container.innerHTML = '<div style="font-size:0.8rem;color:#6b7280;">لا توجد مهام حالية. أضف مهمة جديدة من النموذج أعلاه.</div>';
+        container.innerHTML =
+          '<div style="font-size:0.8rem;color:#6b7280;">لا توجد مهام حالية. أضف مهمة جديدة من النموذج أعلاه.</div>';
         return;
       }
       container.innerHTML = "";
@@ -571,10 +577,13 @@ const links = [
       const tbody = document.querySelector("#tasksTable tbody");
       tbody.innerHTML = '<tr><td colspan="9">...جاري التحميل</td></tr>';
       try {
-        const list = await callApi("getEmployeeTasks", { employeeCode: user.employeeCode });
+        const list = await callApi("getEmployeeTasks", {
+          employeeCode: user.employeeCode
+        });
         tbody.innerHTML = "";
         if (!list || !list.length) {
-          tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام مسجلة بعد</td></tr>';
+          tbody.innerHTML =
+            '<tr><td colspan="9">لا توجد مهام مسجلة بعد</td></tr>';
           return;
         }
         list.forEach(t => {
@@ -596,7 +605,8 @@ const links = [
         });
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="9">خطأ في تحميل المهام</td></tr>';
+        tbody.innerHTML =
+          '<tr><td colspan="9">خطأ في تحميل المهام</td></tr>';
       }
     }
 
