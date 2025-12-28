@@ -106,11 +106,39 @@
     button.secondary { background: #6c757d; }
     button.small { padding: 5px 8px; font-size: 0.8rem; }
 
-    .timer-display {
-      margin-top: 6px;
-      font-size: 0.95rem;
+    .current-tasks {
+      max-height: 260px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 6px;
+    }
+    .current-task-row {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 0.8fr 0.7fr 1.4fr;
+      gap: 4px;
+      align-items: center;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      border-bottom: 1px dashed #eee;
+      padding-bottom: 4px;
+    }
+    .current-task-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .task-timer {
       font-weight: 600;
     }
+    .status-pill {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+    }
+    .status-running { background: #e0f2fe; color: #0369a1; }
+    .status-paused  { background: #fef9c3; color: #854d0e; }
+    .status-new     { background: #f3f4f6; color: #4b5563; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -157,7 +185,7 @@
 <body>
   <header>
     <div class="header-top">
-      <h1>واجهة الموظف - إدخال المهام</h1>
+      <h1>واجهة الموظف - إدارة المهام</h1>
       <div class="user">
         <span id="userName"></span> |
         <a href="#" onclick="logout()">تسجيل الخروج</a>
@@ -167,9 +195,9 @@
   </header>
 
   <div class="layout">
-    <!-- جزء إدخال المهام -->
+    <!-- عمود المهام -->
     <div class="card">
-      <h2>إدخال مهمة جديدة</h2>
+      <h2>إضافة مهمة جديدة إلى قائمة المهام الحالية</h2>
 
       <div class="row">
         <div>
@@ -184,7 +212,7 @@
 
       <div class="row">
         <div>
-          <label>تاريخ المهمة</label>
+          <label>تاريخ المهمة (يطبّق على المهام الجديدة)</label>
           <input id="taskDate" type="date" />
         </div>
         <div>
@@ -211,19 +239,16 @@
         <input id="assignedLink" />
       </div>
 
-      <!-- العداد -->
-      <h2 style="margin-top:14px;">عداد وقت التنفيذ</h2>
-      <div class="timer-display" id="timerDisplay">00:00</div>
-      <button class="small" onclick="startTimer()">بدء</button>
-      <button class="small secondary" onclick="pauseTimer()">إيقاف مؤقت</button>
-      <button class="small secondary" onclick="finishTimer()">إيقاف نهائي وحفظ المهمة</button>
+      <button onclick="addCurrentTask()">إضافة المهمة إلى قائمة المهام الحالية</button>
+      <div id="saveMsg" style="margin-top:8px;font-size:0.8rem;color:#0a7;"></div>
 
-      <input type="hidden" id="durationMinutes" value="0" />
+      <h2 style="margin-top:16px;">المهام الحالية (يمكن تشغيل أكثر من مهمة)</h2>
+      <div class="current-tasks" id="currentTasksContainer">
+        <div style="font-size:0.8rem;color:#6b7280;">لا توجد مهام حالية. أضف مهمة جديدة من النموذج أعلاه.</div>
+      </div>
 
-      <div id="saveMsg" style="margin-top:8px;font-size:0.8rem;color:#0a7;"> </div>
-
-      <h2 style="margin-top:16px;">مهامي</h2>
-      <div style="max-height:260px;overflow-y:auto;">
+      <h2 style="margin-top:18px;">كل مهامي السابقة</h2>
+      <div style="max-height:280px;overflow-y:auto;">
         <table id="tasksTable">
           <thead>
             <tr>
@@ -243,7 +268,7 @@
       </div>
     </div>
 
-    <!-- جزء لوحة القواعد والبوت -->
+    <!-- عمود القواعد / البوت -->
     <div class="card">
       <h2>لوحة القواعد / البوت</h2>
       <div class="rules-search">
@@ -270,9 +295,25 @@
     }
 
     let user = null;
-    let timerInterval = null;
-    let timerSeconds = 0;
-    let timerRunning = false;
+
+    // مهام الجلسة الحالية (قبل الحفظ في الشيت)
+    let currentTasks = [];   // {id, fields..., seconds, running, status}
+    let nextLocalId = 1;
+    let tickInterval = null;
+
+    function startTickLoop() {
+      if (tickInterval) return;
+      tickInterval = setInterval(() => {
+        let changed = false;
+        currentTasks.forEach(t => {
+          if (t.running) {
+            t.seconds++;
+            changed = true;
+          }
+        });
+        if (changed) renderCurrentTasks();
+      }, 1000);
+    }
 
     function logout() {
       localStorage.removeItem("taskUser");
@@ -353,6 +394,7 @@
         .catch(console.error);
 
       loadEmployeeTasks();
+      startTickLoop();
     }
 
     function onTaskTypeChange() {
@@ -361,79 +403,177 @@
       document.getElementById("assignedSection").style.display = (val === "مهمة موكلة") ? "block" : "none";
     }
 
-    function updateTimerDisplay() {
-      const minutes = Math.floor(timerSeconds / 60);
-      const seconds = timerSeconds % 60;
-      document.getElementById("timerDisplay").textContent =
-        ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2);
-    }
+    // إضافة مهمة جديدة إلى قائمة المهام الحالية (بدون حفظ في الشيت بعد)
+    function addCurrentTask() {
+      const msg = document.getElementById("saveMsg");
+      msg.textContent = "";
 
-    function startTimer() {
-      if (timerRunning) return;
-      timerRunning = true;
-      timerInterval = setInterval(() => {
-        timerSeconds++;
-        updateTimerDisplay();
-      }, 1000);
-    }
+      const taskType = document.getElementById("taskType").value;
+      const productCode = document.getElementById("productCode").value.trim();
+      const productCategory = document.getElementById("productCategory").value;
+      const branchCount = document.getElementById("branchCount").value;
+      const assignedText = document.getElementById("assignedText").value;
+      const assignedLink = document.getElementById("assignedLink").value;
+      const taskDate = document.getElementById("taskDate").value;
 
-    function pauseTimer() {
-      if (!timerRunning) return;
-      timerRunning = false;
-      clearInterval(timerInterval);
-    }
-
-    function finishTimer() {
-      if (!timerRunning && timerSeconds === 0) {
-        alert("ابدأ العداد أولاً");
+      if (!taskType) {
+        msg.textContent = "يرجى اختيار نوع المهمة";
         return;
       }
-      pauseTimer();
-      const minutes = Math.round(timerSeconds / 60);
-      document.getElementById("durationMinutes").value = minutes;
-      saveTask();
+      if (taskType === "رفع منتج" && !productCode) {
+        msg.textContent = "يرجى إدخال كود المنتج لمهمة رفع المنتج";
+        return;
+      }
+
+      const obj = {
+        id: nextLocalId++,
+        employeeCode: user.employeeCode,
+        employeeName: user.name,
+        taskDate,
+        taskType,
+        productCode,
+        productCategory,
+        branchCount,
+        assignedText,
+        assignedLink,
+        seconds: 0,
+        running: false,
+        status: "new"   // new / running / paused
+      };
+      currentTasks.push(obj);
+      renderCurrentTasks();
+
+      // تفريغ الحقول الخاصة بالمهمة (لكن نترك التاريخ ونوع المهمة)
+      document.getElementById("productCode").value = "";
+      document.getElementById("branchCount").value = "";
+      document.getElementById("assignedText").value = "";
+      document.getElementById("assignedLink").value = "";
+      msg.textContent = "تمت إضافة المهمة إلى قائمة المهام الحالية.";
     }
 
-    async function saveTask() {
+    function formatSeconds(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+    }
+
+    function renderCurrentTasks() {
+      const container = document.getElementById("currentTasksContainer");
+      if (!currentTasks.length) {
+        container.innerHTML = '<div style="font-size:0.8rem;color:#6b7280;">لا توجد مهام حالية. أضف مهمة جديدة من النموذج أعلاه.</div>';
+        return;
+      }
+      container.innerHTML = "";
+
+      currentTasks.forEach(t => {
+        const row = document.createElement("div");
+        row.className = "current-task-row";
+
+        let statusText = "لم تبدأ";
+        let statusClass = "status-new";
+        if (t.status === "running") {
+          statusText = "قيد التنفيذ";
+          statusClass = "status-running";
+        } else if (t.status === "paused") {
+          statusText = "متوقفة مؤقتاً";
+          statusClass = "status-paused";
+        }
+
+        row.innerHTML = `
+          <div><strong>${t.taskType}</strong><br/><span style="color:#6b7280;">${t.productCode || t.assignedText || ""}</span></div>
+          <div>${t.productCategory || "-"}</div>
+          <div class="task-timer">${formatSeconds(t.seconds)}</div>
+          <div><span class="status-pill ${statusClass}">${statusText}</span></div>
+          <div>
+            <button class="small" onclick="startTask(${t.id})">بدء/استئناف</button>
+            <button class="small secondary" onclick="pauseTask(${t.id})">إيقاف</button>
+          </div>
+          <div>
+            <button class="small secondary" onclick="finishTask(${t.id})">إنهاء وحفظ</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function startTask(id) {
+      const t = currentTasks.find(x => x.id === id);
+      if (!t) return;
+      t.running = true;
+      t.status = "running";
+      renderCurrentTasks();
+    }
+
+    function pauseTask(id) {
+      const t = currentTasks.find(x => x.id === id);
+      if (!t) return;
+      t.running = false;
+      if (t.seconds === 0) {
+        t.status = "new";
+      } else {
+        t.status = "paused";
+      }
+      renderCurrentTasks();
+    }
+
+    async function finishTask(id) {
+      const tIndex = currentTasks.findIndex(x => x.id === id);
+      if (tIndex === -1) return;
+      const t = currentTasks[tIndex];
+
+      if (t.seconds === 0) {
+        if (!confirm("لم يتم تشغيل العداد لهذه المهمة. حفظها بوقت 0 دقيقة؟")) {
+          return;
+        }
+      }
+      t.running = false;
+      t.status = "paused";
+
+      const minutes = Math.round(t.seconds / 60);
+
       const msg = document.getElementById("saveMsg");
       msg.textContent = "...جاري حفظ المهمة";
 
-      const obj = {
-        employeeCode: user.employeeCode,
-        employeeName: user.name,
-        taskDate: document.getElementById("taskDate").value,
-        taskType: document.getElementById("taskType").value,
-        productCode: document.getElementById("productCode").value,
-        productCategory: document.getElementById("productCategory").value,
-        branchCount: document.getElementById("branchCount").value,
-        assignedText: document.getElementById("assignedText").value,
-        assignedLink: document.getElementById("assignedLink").value,
-        durationMinutes: document.getElementById("durationMinutes").value
+      const payload = {
+        employeeCode: t.employeeCode,
+        employeeName: t.employeeName,
+        taskDate: t.taskDate,
+        taskType: t.taskType,
+        productCode: t.productCode,
+        productCategory: t.productCategory,
+        branchCount: t.branchCount,
+        assignedText: t.assignedText,
+        assignedLink: t.assignedLink,
+        durationMinutes: minutes
       };
 
       try {
-        const res = await callApi("saveTask", obj);
+        const res = await callApi("saveTask", payload);
         if (res.success) {
           msg.textContent = "تم حفظ المهمة بنجاح. رقم المهمة: " + res.taskId;
-          timerSeconds = 0;
-          updateTimerDisplay();
-          document.getElementById("durationMinutes").value = 0;
+          currentTasks.splice(tIndex, 1);
+          renderCurrentTasks();
           loadEmployeeTasks();
         } else {
           msg.textContent = "فشل حفظ المهمة";
         }
       } catch (err) {
         console.error(err);
-        msg.textContent = "حدث خطأ في الحفظ";
+        msg.textContent = "حدث خطأ في حفظ المهمة";
       }
     }
 
+    // تحميل جميع المهام السابقة من الشيت
     async function loadEmployeeTasks() {
       const tbody = document.querySelector("#tasksTable tbody");
       tbody.innerHTML = '<tr><td colspan="9">...جاري التحميل</td></tr>';
       try {
         const list = await callApi("getEmployeeTasks", { employeeCode: user.employeeCode });
         tbody.innerHTML = "";
+        if (!list || !list.length) {
+          tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام مسجلة بعد</td></tr>';
+          return;
+        }
         list.forEach(t => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
