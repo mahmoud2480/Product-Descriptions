@@ -6,12 +6,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+
     header {
       background:#0d6efd; color:#fff; padding:10px 16px;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .header-top {
       display:flex; justify-content:space-between; align-items:center;
     }
     header h1 { margin:0; font-size:1.1rem; }
     header a{color:#fff;}
+
+    .nav-buttons {
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .nav-buttons button {
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.7);
+      background:rgba(255,255,255,0.1);
+      color:#fff;
+      font-family:"Cairo",system-ui,sans-serif;
+      font-size:0.8rem;
+      cursor:pointer;
+    }
+    .nav-buttons button:hover {
+      background:rgba(255,255,255,0.25);
+    }
+    .nav-buttons button.active {
+      background:#fff;
+      color:#0d6efd;
+    }
+
     .container { padding:10px; display:grid; gap:10px; grid-template-columns:1.2fr 1.8fr; }
     @media (max-width:900px) {
       .container { grid-template-columns:1fr; }
@@ -36,11 +62,14 @@
 </head>
 <body>
   <header>
-    <h1>لوحة الإدارة</h1>
-    <div>
-      <span id="adminName"></span> |
-      <a href="#" onclick="logout()">تسجيل الخروج</a>
+    <div class="header-top">
+      <h1>لوحة الإدارة</h1>
+      <div>
+        <span id="adminName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
     </div>
+    <div class="nav-buttons" id="navButtons"></div>
   </header>
   <div class="container">
     <div class="card">
@@ -79,24 +108,16 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
-  async function callApi(action, payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    // مهم: نجعل النوع text/plain لتجنب طلب OPTIONS (preflight)
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, payload })
-  });
 
-  // نقرأ الرد كنص ثم نحوله لـ JSON
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error("خطأ في parsing JSON من السيرفر:", text, e);
-    throw e;
-  }
-}
-
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+      const text = await res.text();
+      return JSON.parse(text);
+    }
 
     let user = null;
 
@@ -104,6 +125,40 @@
       localStorage.removeItem("taskUser");
       window.location.href = "index.html";
     }
+
+    // --- الأدوار والتنقل ---
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+      const rolesText = user.role.toString().toUpperCase();
+      return rolesText.includes(code);
+    }
+
+    function renderNav(activeCode) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
+        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" }
+      ];
+
+      links.forEach(item => {
+        if (hasRole(item.code)) {
+          const btn = document.createElement("button");
+          btn.textContent = item.label;
+          if (activeCode === item.code) btn.classList.add("active");
+          btn.onclick = () => {
+            if (window.location.pathname.endsWith(item.href)) return;
+            window.location.href = item.href;
+          };
+          container.appendChild(btn);
+        }
+      });
+    }
+    // ----------------------
 
     function loadUser() {
       const str = localStorage.getItem("taskUser");
@@ -113,6 +168,7 @@
       }
       user = JSON.parse(str);
       document.getElementById("adminName").textContent = user.name + " (" + user.role + ")";
+      renderNav("ADMIN");
       loadRulesList();
     }
 
