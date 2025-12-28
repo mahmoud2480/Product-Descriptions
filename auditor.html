@@ -5,120 +5,205 @@
   <title>لوحة المدقق</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+    body {
+      margin: 0;
+      font-family: "Cairo", system-ui, sans-serif;
+      background: #f4f7fb;
+    }
 
     header {
-      background:#0d6efd; color:#fff; padding:10px 16px;
-      display:flex; flex-direction:column; gap:8px;
+      background: #0d6efd;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
     .header-top {
-      display:flex; justify-content:space-between; align-items:center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    header h1 { margin:0; font-size:1.1rem; }
-    header a{color:#fff;}
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    header a {
+      color: #fff;
+    }
 
     .nav-buttons {
-      display:flex; flex-wrap:wrap; gap:6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
     .nav-buttons button {
-      padding:5px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.7);
-      background:rgba(255,255,255,0.1);
-      color:#fff;
-      font-family:"Cairo",system-ui,sans-serif;
-      font-size:0.8rem;
-      cursor:pointer;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-family: "Cairo", system-ui, sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
     }
     .nav-buttons button:hover {
-      background:rgba(255,255,255,0.25);
+      background: rgba(255, 255, 255, 0.25);
     }
     .nav-buttons button.active {
-      background:#fff;
-      color:#0d6efd;
+      background: #fff;
+      color: #0d6efd;
     }
 
     .layout {
-      display:grid; grid-template-columns: 1.7fr 1.3fr; gap:10px; padding:10px;
+      display: grid;
+      grid-template-columns: 1.1fr 1.5fr;
+      gap: 10px;
+      padding: 10px;
     }
-    @media (max-width:900px) {
-      .layout { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
     }
-    .card {
-      background:#fff; border-radius:14px; padding:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.05);
-    }
-    h2 { margin:0 0 8px; font-size:1rem; }
 
-    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-    th, td {
-      border:1px solid #eee; padding:4px 6px; text-align:center;
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
-    th { background:#f1f3f7; }
-    tr:hover { background:#f9fafc; cursor:pointer; }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    /* جدول المهام */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th,
+    td {
+      border: 1px solid #eee;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    th {
+      background: #f1f3f7;
+    }
+    tr:hover {
+      background: #f9fafc;
+      cursor: pointer;
+    }
 
     .filters {
-      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;
-      font-size:0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      align-items: flex-end;
     }
-    .filters label { font-size:0.75rem; color:#4b5563; }
+    .filters label {
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
     .filters select {
-      padding:4px 6px;
-      border-radius:8px;
-      border:1px solid #ddd;
-      font-family:inherit;
-      font-size:0.8rem;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.8rem;
     }
 
-    .side {
-      max-height:calc(100vh - 100px);
-      overflow-y:auto;
+    /* تفاصيل التدقيق */
+    label {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.85rem;
     }
-    label { display:block; margin-top:6px; font-size:0.85rem; }
     textarea {
-      width:100%; min-height:70px; border-radius:10px;
-      border:1px solid #ddd; font-family:inherit; font-size:0.85rem;
+      width: 100%;
+      min-height: 80px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 6px 8px;
     }
-    select.rule-select {
-      border-radius:8px; border:1px solid #ddd; padding:3px 4px; font-family:inherit; font-size:0.8rem;
+    select,
+    input {
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 4px 6px;
+      box-sizing: border-box;
     }
+
     button {
-      margin-top:8px; padding:7px 10px; border-radius:10px;
-      border:none; background:#0d6efd; color:#fff;
-      font-family:inherit; font-size:0.85rem; cursor:pointer;
+      margin-top: 8px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #0d6efd;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
 
-    .rule-line {
-      display:flex; align-items:center; justify-content:space-between;
-      border-bottom:1px solid #f1f1f1; padding:3px 0; font-size:0.8rem;
-      gap:6px;
-    }
-    .rule-line:last-child { border-bottom:none; }
-    .rule-desc { flex:1; }
-    .rule-pts { white-space:nowrap; margin-inline:4px; }
-
-    iframe {
-      border:none; width:100%; height:180px; border-radius:10px; margin-top:4px;
+    .msg {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      min-height: 1.2em;
     }
 
-    .badge {
-      display:inline-block;
-      padding:2px 6px;
-      border-radius:999px;
-      font-size:0.72rem;
-      background:#e5e7eb;
-      color:#374151;
+    .rule-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
     }
-    .badge-status-open { background:#fee2e2; color:#b91c1c; }
-    .badge-status-done { background:#dcfce7; color:#166534; }
-    .badge-status-pending { background:#fef9c3; color:#854d0e; }
+    .rule-text {
+      flex: 1;
+      text-align: right;
+    }
+    .rule-points {
+      white-space: nowrap;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-inline: 4px;
+    }
+    .rule-options {
+      display: flex;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .rule-options label {
+      margin: 0;
+      font-size: 0.75rem;
+    }
 
-    .quality-summary {
-      margin-top:6px;
-      font-size:0.8rem;
-      padding:6px 8px;
-      border-radius:10px;
-      background:#f3f4f6;
+    .product-frame {
+      width: 100%;
+      height: 200px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      margin-top: 6px;
+    }
+
+    .summary-box {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 6px 8px;
     }
   </style>
 </head>
@@ -127,7 +212,7 @@
     <div class="header-top">
       <h1>لوحة المدقق</h1>
       <div>
-        <span id="audName"></span> |
+        <span id="userName"></span> |
         <a href="#" onclick="logout()">تسجيل الخروج</a>
       </div>
     </div>
@@ -135,46 +220,54 @@
   </header>
 
   <div class="layout">
-    <!-- جدول المهام -->
+    <!-- تفاصيل التدقيق -->
+    <div class="card">
+      <h2>تفاصيل التدقيق</h2>
+      <div id="detailsArea">
+        اختر مهمة من الجدول لعرض التفاصيل.
+      </div>
+    </div>
+
+    <!-- قائمة المهام -->
     <div class="card">
       <h2>المهام المطلوبة للتدقيق</h2>
       <div class="filters">
         <div>
-          <label>الشهر</label><br/>
-          <select id="filterMonth" onchange="renderTasks()"></select>
+          <label>الشهر</label><br />
+          <select id="filterMonth" onchange="reloadTasks()"></select>
         </div>
         <div>
-          <label>حالة التدقيق</label><br/>
-          <select id="filterStatus" onchange="renderTasks()">
-            <option value="OPEN">غير مدقق / يحتاج تعديل</option>
-            <option value="ALL">الكل</option>
+          <label>حالة التدقيق</label><br />
+          <select id="filterStatus" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+            <option value="غير مدقق">غير مدقق</option>
             <option value="تم التدقيق">تم التدقيق</option>
-            <option value="غير مدقق">غير مدقق فقط</option>
-            <option value="يحتاج تعديل">يحتاج تعديل فقط</option>
-            <option value="مرفوض">مرفوض فقط</option>
+            <option value="يحتاج تعديل">يحتاج تعديل</option>
           </select>
         </div>
         <div>
-          <label>الموظف</label><br/>
-          <select id="filterEmployee" onchange="renderTasks()">
+          <label>الموظف</label><br />
+          <select id="filterEmployee" onchange="reloadTasks()">
             <option value="">الكل</option>
           </select>
         </div>
         <div>
-          <label>نوع المهمة</label><br/>
-          <select id="filterTaskType" onchange="renderTasks()">
+          <label>نوع المهمة</label><br />
+          <select id="filterTaskType" onchange="applyFiltersAndRender()">
             <option value="">الكل</option>
+            <option value="رفع منتج">رفع منتج</option>
+            <option value="مهمة موكلة">مهمة موكلة</option>
           </select>
         </div>
         <div>
-          <label>تصنيف المنتج</label><br/>
-          <select id="filterCategory" onchange="renderTasks()">
+          <label>تصنيف المنتج</label><br />
+          <select id="filterCategory" onchange="applyFiltersAndRender()">
             <option value="">الكل</option>
           </select>
         </div>
       </div>
 
-      <div style="max-height:calc(100vh - 170px);overflow-y:auto;">
+      <div style="max-height: calc(100vh - 210px); overflow-y: auto;">
         <table>
           <thead>
             <tr>
@@ -183,7 +276,7 @@
               <th>اسم الموظف</th>
               <th>نوع المهمة</th>
               <th>كود المنتج</th>
-              <th>التصنيف</th>
+              <th>تصنيف المنتج</th>
               <th>تاريخ المهمة</th>
               <th>حالة التدقيق</th>
               <th>نقاط الجودة</th>
@@ -193,76 +286,91 @@
         </table>
       </div>
     </div>
-
-    <!-- اللوحة الجانبية -->
-    <div class="card side">
-      <h2>تفاصيل التدقيق</h2>
-      <div id="auditDetails">
-        <div>اختر مهمة من الجدول لعرض التفاصيل.</div>
-      </div>
-    </div>
   </div>
 
   <script>
-https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action, payload })
+        body: JSON.stringify({ action, payload }),
       });
-      const text = await res.text();
-      return JSON.parse(text);
+      const txt = await res.text();
+      return JSON.parse(txt);
     }
 
     let user = null;
     let allTasks = [];
     let currentTaskId = null;
-    let currentQualityRules = [];
-    let currentTaskObj = null;
 
     function logout() {
       localStorage.removeItem("taskUser");
       window.location.href = "index.html";
     }
 
-    // --- الأدوار والتنقل ---
     function hasRole(code) {
       if (!user || !user.role) return false;
       const rolesText = user.role.toString().toUpperCase();
       return rolesText.includes(code);
     }
 
-    function renderNav(activeCode) {
+    function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
 
-const links = [
-  { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
-  { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
-  { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
-  { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-  { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
-  { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
-];
+      const links = [
+        { code: "EMP", label: "واجهة الموظف", href: "employee.html" },
+        { code: "EMP", label: "أفكار الموظف", href: "ideas.html" },
+        { code: "AUDITOR", label: "لوحة المدقق", href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN", label: "لوحة الإدارة", href: "admin.html" },
+        { code: "ADMIN", label: "إدارة الأفكار", href: "ideas_admin.html" },
+      ];
 
-
-      links.forEach(item => {
-        if (hasRole(item.code)) {
-          const btn = document.createElement("button");
-          btn.textContent = item.label;
-          if (activeCode === item.code) btn.classList.add("active");
-          btn.onclick = () => {
-            if (window.location.pathname.endsWith(item.href)) return;
+      links.forEach((item) => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
             window.location.href = item.href;
-          };
-          container.appendChild(btn);
-        }
+          }
+        };
+        container.appendChild(btn);
       });
     }
-    // ----------------------
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
+      const now = new Date();
+
+      sel.innerHTML = "";
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.appendChild(allOpt);
+
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ("0" + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+
+      // افتراضي: الشهر الحالي
+      const currentKey =
+        now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
+      sel.value = currentKey;
+    }
 
     function loadUser() {
       const str = localStorage.getItem("taskUser");
@@ -271,149 +379,128 @@ const links = [
         return;
       }
       user = JSON.parse(str);
-      document.getElementById("audName").textContent = user.name + " (" + user.role + ")";
-      renderNav("AUDITOR");
 
-      initMonthFilter();
-      loadTasksFromServer();
-    }
-
-    function initMonthFilter() {
-      const sel = document.getElementById("filterMonth");
-      const now = new Date();
-      for (let i = 0; i < 6; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const y = d.getFullYear();
-        const m = ('0' + (d.getMonth() + 1)).slice(-2);
-        const key = y + "-" + m;
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = key;
-        sel.appendChild(opt);
-      }
-      const allOpt = document.createElement("option");
-      allOpt.value = "";
-      allOpt.textContent = "كل الأشهر";
-      sel.insertBefore(allOpt, sel.firstChild);
-      sel.value = "";
-    }
-
-    async function loadTasksFromServer() {
-      const tbody = document.getElementById("tasksBody");
-      tbody.innerHTML = '<tr><td colspan="9">...جاري التحميل</td></tr>';
-      try {
-        const list = await callApi("getTasksForAudit", { filters: {} });
-        allTasks = list || [];
-        buildFilterLists();
-        renderTasks();
-      } catch (err) {
-        console.error(err);
-        tbody.innerHTML = '<tr><td colspan="9">خطأ في تحميل المهام</td></tr>';
-      }
-    }
-
-    function buildFilterLists() {
-      const empSel = document.getElementById("filterEmployee");
-      const typeSel = document.getElementById("filterTaskType");
-      const catSel = document.getElementById("filterCategory");
-
-      empSel.innerHTML = '<option value="">الكل</option>';
-      typeSel.innerHTML = '<option value="">الكل</option>';
-      catSel.innerHTML = '<option value="">الكل</option>';
-
-      const empSet = new Set();
-      const typeSet = new Set();
-      const catSet = new Set();
-
-      allTasks.forEach(t => {
-        if (t.EmployeeName) empSet.add(t.EmployeeName + '|' + t.EmployeeCode);
-        if (t.TaskType) typeSet.add(t.TaskType);
-        if (t.ProductCategory) catSet.add(t.ProductCategory);
-      });
-
-      empSet.forEach(v => {
-        const [name, code] = v.split('|');
-        const opt = document.createElement("option");
-        opt.value = code;
-        opt.textContent = name + ' (' + code + ')';
-        empSel.appendChild(opt);
-      });
-
-      typeSet.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        typeSel.appendChild(opt);
-      });
-
-      catSet.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        catSel.appendChild(opt);
-      });
-    }
-
-    function renderTasks() {
-      const tbody = document.getElementById("tasksBody");
-      tbody.innerHTML = "";
-
-      if (!allTasks.length) {
-        tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام</td></tr>';
+      // فقط AUDITOR أو ADMIN
+      if (!hasRole("AUDITOR") && !hasRole("ADMIN")) {
+        window.location.href = "employee.html";
         return;
       }
 
-      const monthVal = document.getElementById("filterMonth").value;
-      const statusVal = document.getElementById("filterStatus").value;
-      const empVal = document.getElementById("filterEmployee").value;
-      const typeVal = document.getElementById("filterTaskType").value;
-      const catVal = document.getElementById("filterCategory").value;
+      document.getElementById("userName").textContent =
+        user.name + " (" + user.employeeCode + ")";
+      renderNav("auditor.html");
+      initMonthFilter();
+      reloadTasks();
+    }
 
-      const filtered = allTasks.filter(t => {
-        if (monthVal) {
-          if (!t.TaskDate) return false;
-          const d = new Date(t.TaskDate);
-          const key = d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2);
-          if (key !== monthVal) return false;
+    async function reloadTasks() {
+      const tbody = document.getElementById("tasksBody");
+      tbody.innerHTML = "<tr><td colspan='9'>...جاري التحميل</td></tr>";
+
+      const monthKey = document.getElementById("filterMonth").value || null;
+      const empCode = document.getElementById("filterEmployee").value || null;
+
+      try {
+        const res = await callApi("getTasksForAudit", {
+          filters: { monthKey: monthKey, employeeCode: empCode },
+        });
+
+        allTasks = res || [];
+        buildEmployeeFilterFromData();
+        buildCategoryFilterFromData();
+        applyFiltersAndRender();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+          "<tr><td colspan='9'>خطأ في الاتصال بالسيرفر</td></tr>";
+      }
+    }
+
+    function buildEmployeeFilterFromData() {
+      const sel = document.getElementById("filterEmployee");
+      const oldVal = sel.value;
+      const set = new Set();
+      allTasks.forEach((t) => {
+        if (t.EmployeeCode) {
+          set.add(t.EmployeeName + "|" + t.EmployeeCode);
         }
+      });
 
-        if (statusVal === 'OPEN') {
-          if (t.AuditStatus === 'تم التدقيق') return false;
-        } else if (
-          statusVal === 'غير مدقق' ||
-          statusVal === 'يحتاج تعديل' ||
-          statusVal === 'تم التدقيق' ||
-          statusVal === 'مرفوض'
-        ) {
-          if (t.AuditStatus !== statusVal) return false;
-        }
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((v) => {
+        const [name, code] = v.split("|");
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name + " (" + code + ")";
+        sel.appendChild(opt);
+      });
 
-        if (empVal && t.EmployeeCode !== empVal) return false;
-        if (typeVal && t.TaskType !== typeVal) return false;
-        if (catVal && t.ProductCategory !== catVal) return false;
+      if ([...set].some((v) => v.split("|")[1] === oldVal)) {
+        sel.value = oldVal;
+      }
+    }
 
+    function buildCategoryFilterFromData() {
+      const sel = document.getElementById("filterCategory");
+      const oldVal = sel.value;
+      const set = new Set();
+      allTasks.forEach((t) => {
+        if (t.ProductCategory) set.add(t.ProductCategory);
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        sel.appendChild(opt);
+      });
+
+      if (set.has(oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function applyFiltersAndRender() {
+      const tbody = document.getElementById("tasksBody");
+      if (!allTasks.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='9'>لا توجد مهام مطابقة للفلاتر الحالية</td></tr>";
+        document.getElementById("detailsArea").textContent =
+          "اختر مهمة من الجدول لعرض التفاصيل.";
+        return;
+      }
+
+      const status = document.getElementById("filterStatus").value || "";
+      const type = document.getElementById("filterTaskType").value || "";
+      const cat = document.getElementById("filterCategory").value || "";
+
+      const filtered = allTasks.filter((t) => {
+        if (status && String(t.AuditStatus || "") !== status) return false;
+        if (type && String(t.TaskType || "") !== type) return false;
+        if (cat && String(t.ProductCategory || "") !== cat) return false;
         return true;
       });
 
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام مطابقة للفلاتر الحالية</td></tr>';
+        tbody.innerHTML =
+          "<tr><td colspan='9'>لا توجد مهام مطابقة للفلاتر الحالية</td></tr>";
+        document.getElementById("detailsArea").textContent =
+          "اختر مهمة من الجدول لعرض التفاصيل.";
         return;
       }
 
-      filtered.forEach(t => {
+      tbody.innerHTML = "";
+      filtered.forEach((t) => {
         const tr = document.createElement("tr");
-        tr.onclick = () => loadAuditDetails(t.TaskID);
-
-        let dateTxt = "";
-        if (t.TaskDate) {
-          dateTxt = new Date(t.TaskDate).toLocaleDateString("ar-SY");
-        }
-
-        let badgeClass = "";
-        if (t.AuditStatus === 'تم التدقيق') badgeClass = "badge badge-status-done";
-        else if (t.AuditStatus === 'يحتاج تعديل') badgeClass = "badge badge-status-pending";
-        else if (t.AuditStatus === 'مرفوض') badgeClass = "badge badge-status-open";
-        else badgeClass = "badge badge-status-open";
+        const d = t.TaskDate
+          ? new Date(t.TaskDate).toLocaleDateString("ar-SY")
+          : "";
+        const qualityText =
+          (t.QualityEarned || 0) +
+          " / " +
+          (t.QualityPossible || 0) +
+          (t.QualityPossible ? " (" + (t.QualityPercent || 0).toFixed?.(0) + "%)" : "");
 
         tr.innerHTML = `
           <td>${t.TaskID}</td>
@@ -422,169 +509,216 @@ const links = [
           <td>${t.TaskType || ""}</td>
           <td>${t.ProductCode || ""}</td>
           <td>${t.ProductCategory || ""}</td>
-          <td>${dateTxt}</td>
-          <td><span class="${badgeClass}">${t.AuditStatus || "غير مدقق"}</span></td>
-          <td>${t.QualityEarned || 0}/${t.QualityPossible || 0}</td>
+          <td>${d}</td>
+          <td>${t.AuditStatus || ""}</td>
+          <td>${qualityText}</td>
         `;
+        tr.onclick = () => openTaskDetails(t.TaskID);
         tbody.appendChild(tr);
       });
     }
 
-    async function loadAuditDetails(taskId) {
+    async function openTaskDetails(taskId) {
       currentTaskId = taskId;
-      const container = document.getElementById("auditDetails");
-      container.innerHTML = "...جاري التحميل";
+      const container = document.getElementById("detailsArea");
+      container.innerHTML = "...جاري تحميل تفاصيل المهمة";
+
       try {
-        const res = await callApi("getAuditDetails", { taskId });
+        const res = await callApi("getAuditDetails", { taskId: taskId });
         if (!res.success) {
-          container.textContent = "لم يتم العثور على المهمة";
+          container.textContent = "تعذر جلب تفاصيل المهمة.";
           return;
         }
-        currentQualityRules = res.qualityRules || [];
-        currentTaskObj = res.task;
-        const p = res.product;
 
-        let html = "";
-        html += `<div><strong>الموظف:</strong> ${res.task.EmployeeName || ""} (${res.task.EmployeeCode || ""})</div>`;
-        html += `<div><strong>تاريخ المهمة:</strong> ${res.task.TaskDate ? new Date(res.task.TaskDate).toLocaleDateString("ar-SY") : ""}</div>`;
-        html += `<div><strong>نوع المهمة:</strong> ${res.task.TaskType || ""}</div>`;
-        html += `<div><strong>كود المنتج:</strong> ${res.task.ProductCode || ""}</div>`;
-        html += `<div><strong>تصنيف المنتج:</strong> ${res.task.ProductCategory || ""}</div>`;
+        const task = res.task || {};
+        const product = res.product || null;
+        const rules = res.qualityRules || [];
 
-        html += `<div><strong>تنفيذ ملاحظات التدقيق:</strong> ${
-          res.task.EmployeeFollowUp === 'YES'
-            ? 'نعم'
-            : res.task.EmployeeFollowUp === 'NO'
-            ? 'لا'
-            : 'غير محدد'
-        }</div>`;
+        const d = task.TaskDate
+          ? new Date(task.TaskDate).toLocaleString("ar-SY")
+          : "";
 
-        if (p) {
-          html += `<hr><div><strong>المنتج:</strong> ${p.ProductName || ""} (${p.ProductCode || ""})</div>`;
-          if (p.ProductURL) {
-            html += `<div><strong>رابط المنتج:</strong> <a href="${p.ProductURL}" target="_blank">فتح في تبويب جديد</a></div>`;
-            html += `<iframe src="${p.ProductURL}"></iframe>`;
-          }
+        let productHtml = `<div>لا توجد بيانات منتج لهذه المهمة.</div>`;
+        if (product) {
+          productHtml = `
+            <div><strong>اسم المنتج:</strong> ${product.ProductName || ""}</div>
+            <div><strong>كود المنتج:</strong> ${product.ProductCode || ""}</div>
+            ${
+              product.ProductURL
+                ? `<div><a href="${product.ProductURL}" target="_blank">فتح المنتج في صفحة جديدة</a></div>
+                   <iframe class="product-frame" src="${product.ProductURL}"></iframe>`
+                : ""
+            }
+          `;
         }
 
-        html += `<hr><div><strong>بنود الجودة:</strong></div>`;
-        if (!currentQualityRules.length) {
-          html += `<div>لا توجد قواعد جودة لهذا المنتج / هذه المهمة.</div>`;
+        let rulesHtml = "";
+        if (!rules.length) {
+          rulesHtml = "<div>لا توجد قواعد جودة لهذا المنتج / هذه المهمة.</div>";
         } else {
-          html += `<div id="rulesContainer">`;
-          currentQualityRules.forEach((r, idx) => {
-            html += `
-              <div class="rule-line">
-                <div class="rule-desc">${r.Description}</div>
-                <div class="rule-pts">${r.Points} نقطة</div>
-                <div>
-                  <select class="rule-select" data-rule-index="${idx}" onchange="updateQualityPreview()">
-                    <option value="none">لا ينطبق</option>
-                    <option value="correct">صح</option>
-                    <option value="wrong">خطأ</option>
-                  </select>
+          rulesHtml = rules
+            .map((r, index) => {
+              const id = "rule_" + index;
+              return `
+              <div class="rule-row" data-rule-index="${index}">
+                <div class="rule-text">${r.Description || ""}</div>
+                <div class="rule-points">${r.Points || 0} نقطة</div>
+                <div class="rule-options">
+                  <label><input type="radio" name="${id}" value="correct" /> ✅ صح</label>
+                  <label><input type="radio" name="${id}" value="wrong" /> ❌ خطأ</label>
+                  <label><input type="radio" name="${id}" value="na" checked /> ⭕ لا ينطبق</label>
                 </div>
               </div>
             `;
-          });
-          html += `</div>`;
+            })
+            .join("");
         }
 
-        html += `
-          <div class="quality-summary" id="qualitySummary">
+        const follow =
+          task.EmployeeFollowUp === "YES"
+            ? "نعم"
+            : task.EmployeeFollowUp === "NO"
+            ? "لا"
+            : "غير محدد";
+
+        container.innerHTML = `
+          <div><strong>الموظف:</strong> ${task.EmployeeName || ""} (${task.EmployeeCode || ""})</div>
+          <div><strong>تاريخ المهمة:</strong> ${d}</div>
+          <div><strong>نوع المهمة:</strong> ${task.TaskType || ""}</div>
+          <div><strong>كود المنتج:</strong> ${task.ProductCode || ""}</div>
+          <div><strong>تصنيف المنتج:</strong> ${task.ProductCategory || ""}</div>
+          <div><strong>تنفيذ ملاحظات التدقيق:</strong> ${follow}</div>
+          <hr />
+
+          <h3 style="font-size:0.95rem;">بيانات المنتج</h3>
+          ${productHtml}
+          <hr />
+
+          <h3 style="font-size:0.95rem;">بنود الجودة</h3>
+          <div id="rulesContainer">
+            ${rulesHtml}
+          </div>
+
+          <div class="summary-box" id="qualitySummary">
             مجموع النقاط: 0 / 0 (0%)
           </div>
 
           <label>ملاحظات المدقق للموظف</label>
-          <textarea id="audNotes">${res.task.AuditorNotes || ""}</textarea>
+          <textarea id="auditNotes">${task.AuditorNotes || ""}</textarea>
 
           <label>حالة التدقيق</label>
-          <select id="audStatus">
-            <option value="تم التدقيق"${res.task.AuditStatus === 'تم التدقيق' ? ' selected' : ''}>تم التدقيق</option>
-            <option value="يحتاج تعديل"${res.task.AuditStatus === 'يحتاج تعديل' ? ' selected' : ''}>يحتاج تعديل</option>
-            <option value="غير مدقق"${res.task.AuditStatus === 'غير مدقق' ? ' selected' : ''}>غير مدقق</option>
-            <option value="مرفوض"${res.task.AuditStatus === 'مرفوض' ? ' selected' : ''}>مرفوض</option>
+          <select id="auditStatus">
+            <option value="غير مدقق"${
+              task.AuditStatus === "غير مدقق" ? " selected" : ""
+            }>غير مدقق</option>
+            <option value="تم التدقيق"${
+              task.AuditStatus === "تم التدقيق" ? " selected" : ""
+            }>تم التدقيق</option>
+            <option value="يحتاج تعديل"${
+              task.AuditStatus === "يحتاج تعديل" ? " selected" : ""
+            }>يحتاج تعديل</option>
           </select>
 
-          <button onclick="saveAuditClick()">حفظ التدقيق</button>
-          <div style="margin-top:4px;font-size:0.8rem;color:#0a7;" id="audMsg"></div>
+          <button onclick="saveAudit()">حفظ التدقيق</button>
+          <div class="msg" id="auditMsg"></div>
         `;
 
-        container.innerHTML = html;
-        updateQualityPreview();
-
+        // تحديث ملخص الجودة عند تغيير الاختيارات
+        const rulesContainer = document.getElementById("rulesContainer");
+        if (rulesContainer && rules.length) {
+          rulesContainer.addEventListener("change", updateQualitySummary);
+          updateQualitySummary();
+        }
       } catch (err) {
         console.error(err);
-        container.textContent = "خطأ في تحميل تفاصيل التدقيق";
+        container.textContent = "حدث خطأ أثناء تحميل التفاصيل.";
       }
     }
 
-    function updateQualityPreview() {
-      const summary = document.getElementById("qualitySummary");
-      if (!summary || !currentQualityRules.length) return;
+    function updateQualitySummary() {
+      const summaryEl = document.getElementById("qualitySummary");
+      if (!summaryEl) return;
 
-      const selects = document.querySelectorAll("#rulesContainer select");
+      const rulesContainer = document.getElementById("rulesContainer");
+      const rows = rulesContainer
+        ? rulesContainer.querySelectorAll(".rule-row")
+        : [];
       let totalPossible = 0;
       let totalEarned = 0;
 
-      selects.forEach(sel => {
-        const idx = Number(sel.getAttribute("data-rule-index"));
-        const r = currentQualityRules[idx];
-        const pts = Number(r.Points) || 0;
-
+      rows.forEach((row) => {
+        const ptsText = row.querySelector(".rule-points").textContent || "0";
+        const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
+        if (pts <= 0) return;
         totalPossible += pts;
-        if (sel.value === 'correct') {
+
+        const input = row.querySelector('input[type="radio"]:checked');
+        if (input && input.value === "correct") {
           totalEarned += pts;
         }
       });
 
-      let percent = 0;
-      if (totalPossible > 0) percent = (totalEarned / totalPossible) * 100;
-
-      summary.textContent = `مجموع النقاط: ${totalEarned} / ${totalPossible} (${percent.toFixed(1)}%)`;
+      const percent = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
+      summaryEl.textContent =
+        "مجموع النقاط: " +
+        totalEarned +
+        " / " +
+        totalPossible +
+        " (" +
+        percent.toFixed(0) +
+        "%)";
     }
 
-    async function saveAuditClick() {
-      const msg = document.getElementById("audMsg");
+    async function saveAudit() {
+      if (currentTaskId == null) return;
+      const msg = document.getElementById("auditMsg");
+      msg.style.color = "#374151";
       msg.textContent = "...جاري الحفظ";
 
-      const selects = document.querySelectorAll("#rulesContainer select");
-      const results = [];
-      selects.forEach(sel => {
-        const idx = Number(sel.getAttribute("data-rule-index"));
-        const r = currentQualityRules[idx];
-        results.push({
-          ruleId: r.RuleID,
-          status: sel.value,
-          points: r.Points
+      const rulesContainer = document.getElementById("rulesContainer");
+      const rows = rulesContainer
+        ? rulesContainer.querySelectorAll(".rule-row")
+        : [];
+      const ruleResults = [];
+
+      rows.forEach((row) => {
+        const index = row.getAttribute("data-rule-index");
+        const descEl = row.querySelector(".rule-text");
+        const ptsText = row.querySelector(".rule-points").textContent || "0";
+        const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
+        const input = row.querySelector('input[type="radio"]:checked');
+        const status = input ? input.value : "na";
+        ruleResults.push({
+          ruleId: index,
+          description: descEl ? descEl.textContent : "",
+          status: status,
+          points: pts,
         });
       });
 
-      const notes = document.getElementById("audNotes").value;
-      const status = document.getElementById("audStatus").value;
+      const notes = document.getElementById("auditNotes").value || "";
+      const status = document.getElementById("auditStatus").value || "تم التدقيق";
 
       try {
         const res = await callApi("saveAudit", {
           taskId: currentTaskId,
-          ruleResults: results,
-          notes,
-          status
+          ruleResults: ruleResults,
+          notes: notes,
+          status: status,
         });
+
         if (res.success) {
-          msg.textContent = `تم الحفظ. نقاط الجودة: ${res.totalEarned}/${res.totalPossible} (${res.percent.toFixed(1)}%)`;
-          const t = allTasks.find(x => x.TaskID === currentTaskId);
-          if (t) {
-            t.AuditStatus = status;
-            t.QualityEarned = res.totalEarned;
-            t.QualityPossible = res.totalPossible;
-          }
-          renderTasks();
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم حفظ التدقيق بنجاح.";
+          reloadTasks();
         } else {
-          msg.textContent = "فشل الحفظ";
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل الحفظ.";
         }
       } catch (err) {
         console.error(err);
-        msg.textContent = "خطأ في حفظ التدقيق";
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
       }
     }
 
