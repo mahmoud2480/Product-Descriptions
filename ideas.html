@@ -151,7 +151,9 @@
   </div>
 
   <script>
-https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec
+    // ✅ API URL الصحيح
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -231,7 +233,8 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
         return;
       }
       user = JSON.parse(str);
-      document.getElementById("empName").textContent = user.name + " (" + user.employeeCode + ")";
+      document.getElementById("empName").textContent =
+        user.name + " (" + user.employeeCode + ")";
       renderNav("ideas.html");
       initMonthFilter();
       loadIdeas();
@@ -297,7 +300,9 @@ https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2
         tbody.innerHTML = "";
         list.forEach((idea) => {
           const tr = document.createElement("tr");
-          const d = idea.Date ? new Date(idea.Date).toLocaleDateString("ar-SY") : "";
+          const d = idea.Date
+            ? new Date(idea.Date).toLocaleDateString("ar-SY")
+            : "";
           tr.innerHTML = `
             <td>${idea.IdeaID}</td>
             <td>${d}</td>
