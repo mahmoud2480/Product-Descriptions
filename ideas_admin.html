@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>إدارة أفكار الموظفين</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family:"Cairo",system-ui,sans-serif; background:#f4f7fb; }
+    header {
+      background:#0d6efd; color:#fff; padding:10px 16px;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .header-top {
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    header h1 { margin:0; font-size:1.1rem; }
+    header a{color:#fff;}
+
+    .nav-buttons {
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .nav-buttons button {
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.7);
+      background:rgba(255,255,255,0.1);
+      color:#fff;
+      font-family:"Cairo",system-ui,sans-serif;
+      font-size:0.8rem;
+      cursor:pointer;
+    }
+    .nav-buttons button:hover {
+      background:rgba(255,255,255,0.25);
+    }
+    .nav-buttons button.active {
+      background:#fff;
+      color:#0d6efd;
+    }
+
+    .layout {
+      display:grid; grid-template-columns: 1.5fr 1.2fr; gap:10px; padding:10px;
+    }
+    @media (max-width:900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .card {
+      background:#fff; border-radius:14px; padding:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+    h2 { margin:0 0 8px; font-size:1rem; }
+
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+    th, td {
+      border:1px solid #eee; padding:4px 6px; text-align:center;
+    }
+    th { background:#f1f3f7; }
+    tr:hover { background:#f9fafc; cursor:pointer; }
+
+    .filters {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+      font-size:0.8rem;
+    }
+    .filters label { font-size:0.75rem; color:#4b5563; }
+    .filters select {
+      padding:4px 6px;
+      border-radius:8px;
+      border:1px solid #ddd;
+      font-family:inherit;
+      font-size:0.8rem;
+    }
+
+    label { display:block; margin-top:6px; font-size:0.85rem; }
+    textarea, input, select {
+      width:100%; border-radius:10px;
+      border:1px solid #ddd; font-family:inherit; font-size:0.9rem;
+      padding:6px 8px; box-sizing:border-box;
+    }
+    textarea { min-height:100px; }
+
+    button {
+      margin-top:8px; padding:7px 12px; border-radius:10px;
+      border:none; background:#0d6efd; color:#fff;
+      font-family:inherit; font-size:0.9rem; cursor:pointer;
+    }
+    button.danger {
+      background:#dc2626;
+    }
+
+    .msg { margin-top:4px; font-size:0.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>إدارة أفكار الموظفين</h1>
+      <div>
+        <span id="adminName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
+    </div>
+    <div class="nav-buttons" id="navButtons"></div>
+  </header>
+
+  <div class="layout">
+    <!-- قائمة الأفكار -->
+    <div class="card">
+      <h2>قائمة الأفكار</h2>
+      <div class="filters">
+        <div>
+          <label>الشهر</label><br/>
+          <select id="filterMonth" onchange="loadIdeas()"></select>
+        </div>
+        <div>
+          <label>الموظف</label><br/>
+          <select id="filterEmployee" onchange="loadIdeas()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>الحالة</label><br/>
+          <select id="filterStatus" onchange="loadIdeas()">
+            <option value="">الكل</option>
+            <option value="جديد">جديد</option>
+            <option value="معتمد">معتمد</option>
+            <option value="مرفوض">مرفوض</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="max-height:calc(100vh - 190px);overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>الموظف</th>
+              <th>الفكرة</th>
+              <th>النقاط</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="ideasBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- تفاصيل الفكرة -->
+    <div class="card">
+      <h2>تفاصيل / تعديل الفكرة</h2>
+      <div id="ideaDetails">
+        اختر فكرة من الجدول لعرض التفاصيل.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzun10zsjO4I2xhhvo_j09n9QL6Y_q0ssJ9wisGfK7f1Q8ORcbEe3vjqYCZ5MSDp_3I/exec";
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+      const text = await res.text();
+      return JSON.parse(text);
+    }
+
+    let user = null;
+    let allIdeas = [];
+    let currentIdeaId = null;
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+      const rolesText = user.role.toString().toUpperCase();
+      return rolesText.includes(code);
+    }
+
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
+      ];
+
+      links.forEach(item => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
+            window.location.href = item.href;
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
+      const now = new Date();
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ('0' + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.insertBefore(allOpt, sel.firstChild);
+      sel.value = "";
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+      if (!hasRole("ADMIN")) {
+        window.location.href = "employee.html";
+        return;
+      }
+      document.getElementById("adminName").textContent = user.name + " (" + user.role + ")";
+      renderNav("ideas_admin.html");
+      initMonthFilter();
+      loadIdeas();
+    }
+
+    async function loadIdeas() {
+      const tbody = document.getElementById("ideasBody");
+      tbody.innerHTML = "<tr><td colspan='6'>...جاري التحميل</td></tr>";
+
+      const monthKey = document.getElementById("filterMonth").value || null;
+      const status = document.getElementById("filterStatus").value || null;
+      const empCode = document.getElementById("filterEmployee").value || null;
+
+      try {
+        const res = await callApi("listIdeas", {
+          filters: {
+            employeeCode: empCode,
+            monthKey: monthKey,
+            status: status
+          }
+        });
+        allIdeas = (res && res.ideas) || [];
+
+        buildEmployeeFilter();
+        renderIdeasTable();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='6'>خطأ في تحميل البيانات</td></tr>";
+      }
+    }
+
+    function buildEmployeeFilter() {
+      const sel = document.getElementById("filterEmployee");
+      const oldVal = sel.value;
+      const set = new Set();
+      allIdeas.forEach(i => {
+        if (i.EmployeeCode) {
+          set.add(i.EmployeeName + "|" + i.EmployeeCode);
+        }
+      });
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach(v => {
+        const [name, code] = v.split("|");
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name + " (" + code + ")";
+        sel.appendChild(opt);
+      });
+      if ([...set].some(v => v.split("|")[1] === oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function renderIdeasTable() {
+      const tbody = document.getElementById("ideasBody");
+      if (!allIdeas.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد أفكار</td></tr>";
+        document.getElementById("ideaDetails").textContent = "اختر فكرة من الجدول لعرض التفاصيل.";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      allIdeas.forEach(idea => {
+        const tr = document.createElement("tr");
+        const d = idea.Date ? new Date(idea.Date).toLocaleDateString("ar-SY") : "";
+        tr.innerHTML = `
+          <td>${idea.IdeaID}</td>
+          <td>${d}</td>
+          <td>${idea.EmployeeName || ""} (${idea.EmployeeCode || ""})</td>
+          <td style="text-align:right;">${idea.IdeaText || ""}</td>
+          <td>${idea.Points || 0}</td>
+          <td>${idea.Status || "جديد"}</td>
+        `;
+        tr.onclick = () => showIdeaDetails(idea.IdeaID);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showIdeaDetails(ideaId) {
+      currentIdeaId = ideaId;
+      const idea = allIdeas.find(i => i.IdeaID == ideaId);
+      const container = document.getElementById("ideaDetails");
+      if (!idea) {
+        container.textContent = "لم يتم العثور على الفكرة.";
+        return;
+      }
+      const d = idea.Date ? new Date(idea.Date).toLocaleString("ar-SY") : "";
+
+      container.innerHTML = `
+        <div><strong>الموظف:</strong> ${idea.EmployeeName || ""} (${idea.EmployeeCode || ""})</div>
+        <div><strong>التاريخ:</strong> ${d}</div>
+        <label>نص الفكرة</label>
+        <textarea readonly>${idea.IdeaText || ""}</textarea>
+
+        <label>النقاط</label>
+        <input type="number" id="ideaPoints" value="${idea.Points || 0}" min="0" step="1" />
+
+        <label>الحالة</label>
+        <select id="ideaStatus">
+          <option value="جديد"${idea.Status === "جديد" ? " selected" : ""}>جديد</option>
+          <option value="معتمد"${idea.Status === "معتمد" ? " selected" : ""}>معتمد</option>
+          <option value="مرفوض"${idea.Status === "مرفوض" ? " selected" : ""}>مرفوض</option>
+        </select>
+
+        <label>ملاحظات الإدارة</label>
+        <textarea id="ideaAdminNotes">${idea.AdminNotes || ""}</textarea>
+
+        <button onclick="saveIdea()" >حفظ التعديلات</button>
+        <button class="danger" onclick="deleteIdeaClick()">حذف الفكرة</button>
+        <div class="msg" id="ideaMsg"></div>
+      `;
+    }
+
+    async function saveIdea() {
+      const msg = document.getElementById("ideaMsg");
+      msg.style.color = "#374151";
+      msg.textContent = "...جاري الحفظ";
+
+      const pts = Number(document.getElementById("ideaPoints").value || 0);
+      const status = document.getElementById("ideaStatus").value;
+      const notes = document.getElementById("ideaAdminNotes").value;
+
+      try {
+        const res = await callApi("updateIdea", {
+          ideaId: currentIdeaId,
+          points: pts,
+          status: status,
+          adminNotes: notes
+        });
+        if (res.success) {
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم حفظ التعديلات.";
+          loadIdeas();
+        } else {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل الحفظ.";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
+      }
+    }
+
+    async function deleteIdeaClick() {
+      if (!confirm("هل أنت متأكد من حذف هذه الفكرة؟")) return;
+      const msg = document.getElementById("ideaMsg");
+      msg.style.color = "#374151";
+      msg.textContent = "...جاري الحذف";
+
+      try {
+        const res = await callApi("deleteIdea", { ideaId: currentIdeaId });
+        if (res.success) {
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم حذف الفكرة.";
+          loadIdeas();
+        } else {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل الحذف.";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
