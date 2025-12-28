@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>تسجيل الدخول - نظام المهام</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", system-ui, sans-serif;
+      background: #f4f7fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 360px;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      font-size: 0.9rem;
+    }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+    }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: none;
+      font-family: inherit;
+      background: #0d6efd;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #b3261e;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>نظام المهام - تسجيل الدخول</h1>
+    <label>اسم المستخدم</label>
+    <input id="username" type="text" />
+
+    <label>كلمة المرور</label>
+    <input id="password" type="password" />
+
+    <button id="btnLogin" onclick="doLogin()">دخول</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ action, payload })
+      });
+      return await res.json();
+    }
+
+    async function doLogin() {
+      const btn = document.getElementById("btnLogin");
+      const msg = document.getElementById("msg");
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!username || !password) {
+        msg.textContent = "يرجى إدخال اسم المستخدم وكلمة المرور";
+        return;
+      }
+
+      btn.disabled = true;
+      msg.textContent = "...جاري التحقق";
+
+      try {
+        const res = await callApi("login", { username, password });
+        btn.disabled = false;
+        if (!res.success) {
+          msg.textContent = res.message || "فشل تسجيل الدخول";
+          return;
+        }
+
+        // حفظ بيانات المستخدم
+        localStorage.setItem("taskUser", JSON.stringify(res));
+
+        const role = (res.role || "").toString();
+        if (role.includes("ADMIN")) {
+          window.location.href = "admin.html";
+        } else if (role.includes("AUDITOR")) {
+          window.location.href = "auditor.html";
+        } else if (role.includes("EVALUATOR")) {
+          window.location.href = "evaluator.html";
+        } else {
+          window.location.href = "employee.html";
+        }
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        msg.textContent = "حدث خطأ في الاتصال بالسيرفر";
+      }
+    }
+  </script>
+</body>
+</html>
