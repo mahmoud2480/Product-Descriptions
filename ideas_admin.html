@@ -154,18 +154,25 @@
   </div>
 
   <script>
-    // ✅ تعريف رابط الـ API بدل السطر الخام
+    // ✅ رابط الـ API
     const API_URL =
       "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
+    // ✅ دالة API مع حماية من رد غير JSON
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action, payload })
       });
+
       const text = await res.text();
-      return JSON.parse(text);
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error("API raw response (not JSON):", text);
+        throw new Error("API response is not valid JSON");
+      }
     }
 
     let user = null;
@@ -213,11 +220,12 @@
 
     function initMonthFilter() {
       const sel = document.getElementById("filterMonth");
+      if (!sel) return;
       const now = new Date();
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
-        const m = ('0' + (d.getMonth() + 1)).slice(-2);
+        const m = ("0" + (d.getMonth() + 1)).slice(-2);
         const key = y + "-" + m;
         const opt = document.createElement("option");
         opt.value = key;
@@ -251,11 +259,16 @@
 
     async function loadIdeas() {
       const tbody = document.getElementById("ideasBody");
+      if (!tbody) return;
       tbody.innerHTML = "<tr><td colspan='6'>...جاري التحميل</td></tr>";
 
-      const monthKey = document.getElementById("filterMonth").value || null;
-      const status = document.getElementById("filterStatus").value || null;
-      const empCode = document.getElementById("filterEmployee").value || null;
+      const monthSel = document.getElementById("filterMonth");
+      const statusSel = document.getElementById("filterStatus");
+      const empSel = document.getElementById("filterEmployee");
+
+      const monthKey = monthSel ? (monthSel.value || null) : null;
+      const status = statusSel ? (statusSel.value || null) : null;
+      const empCode = empSel ? (empSel.value || null) : null;
 
       try {
         const res = await callApi("listIdeas", {
@@ -265,8 +278,12 @@
             status: status
           }
         });
-        allIdeas = (res && res.ideas) || [];
 
+        const list = Array.isArray(res)
+          ? res
+          : (res && res.ideas) || [];
+
+        allIdeas = list;
         buildEmployeeFilter();
         renderIdeasTable();
       } catch (err) {
@@ -277,6 +294,7 @@
 
     function buildEmployeeFilter() {
       const sel = document.getElementById("filterEmployee");
+      if (!sel) return;
       const oldVal = sel.value;
       const set = new Set();
       allIdeas.forEach(i => {
@@ -299,6 +317,7 @@
 
     function renderIdeasTable() {
       const tbody = document.getElementById("ideasBody");
+      if (!tbody) return;
       if (!allIdeas.length) {
         tbody.innerHTML = "<tr><td colspan='6'>لا توجد أفكار</td></tr>";
         document.getElementById("ideaDetails").textContent =
@@ -329,6 +348,7 @@
       currentIdeaId = ideaId;
       const idea = allIdeas.find(i => i.IdeaID == ideaId);
       const container = document.getElementById("ideaDetails");
+      if (!container) return;
       if (!idea) {
         container.textContent = "لم يتم العثور على الفكرة.";
         return;
@@ -364,6 +384,7 @@
 
     async function saveIdea() {
       const msg = document.getElementById("ideaMsg");
+      if (!msg) return;
       msg.style.color = "#374151";
       msg.textContent = "...جاري الحفظ";
 
@@ -378,7 +399,7 @@
           status: status,
           adminNotes: notes
         });
-        if (res.success) {
+        if (res && res.success) {
           msg.style.color = "#16a34a";
           msg.textContent = "تم حفظ التعديلات.";
           loadIdeas();
@@ -394,14 +415,16 @@
     }
 
     async function deleteIdeaClick() {
-      if (!confirm("هل أنت متأكد من حذف هذه الفكرة؟")) return;
       const msg = document.getElementById("ideaMsg");
+      if (!msg) return;
+      if (!confirm("هل أنت متأكد من حذف هذه الفكرة؟")) return;
+
       msg.style.color = "#374151";
       msg.textContent = "...جاري الحذف";
 
       try {
         const res = await callApi("deleteIdea", { ideaId: currentIdeaId });
-        if (res.success) {
+        if (res && res.success) {
           msg.style.color = "#16a34a";
           msg.textContent = "تم حذف الفكرة.";
           loadIdeas();
