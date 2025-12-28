@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>تسجيل الدخول - نظام المهام</title>
+  <title>نظام المهام - تسجيل الدخول</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -16,16 +16,17 @@
     }
     .card {
       background: #fff;
-      padding: 20px 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 24px 26px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.12);
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
     }
     h1 {
       margin-top: 0;
       font-size: 1.4rem;
       text-align: center;
+      margin-bottom: 18px;
     }
     label {
       display: block;
@@ -34,16 +35,16 @@
     }
     input {
       width: 100%;
-      padding: 8px 10px;
-      border-radius: 10px;
+      padding: 9px 11px;
+      border-radius: 12px;
       border: 1px solid #ddd;
       font-family: inherit;
     }
     button {
-      margin-top: 14px;
+      margin-top: 16px;
       width: 100%;
       padding: 10px;
-      border-radius: 12px;
+      border-radius: 999px;
       border: none;
       font-family: inherit;
       background: #0d6efd;
@@ -79,24 +80,15 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwnhdLEVt4jw-qbA2_RbKoz-Iwn1wvSSLva8LZSzRm_ZzHIS2BVjkkz8jLjI6FE4gdd/exec";
 
-async function callApi(action, payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    // مهم: نجعل النوع text/plain لتجنب طلب OPTIONS (preflight)
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, payload })
-  });
-
-  // نقرأ الرد كنص ثم نحوله لـ JSON
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error("خطأ في parsing JSON من السيرفر:", text, e);
-    throw e;
-  }
-}
-
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+      const text = await res.text();
+      return JSON.parse(text);
+    }
 
     async function doLogin() {
       const btn = document.getElementById("btnLogin");
@@ -123,7 +115,7 @@ async function callApi(action, payload) {
         // حفظ بيانات المستخدم
         localStorage.setItem("taskUser", JSON.stringify(res));
 
-        const role = (res.role || "").toString();
+        const role = (res.role || "").toString().toUpperCase();
         if (role.includes("ADMIN")) {
           window.location.href = "admin.html";
         } else if (role.includes("AUDITOR")) {
