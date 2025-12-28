@@ -38,25 +38,48 @@
       color:#0d6efd;
     }
 
-    .container { padding:10px; display:grid; gap:10px; grid-template-columns:1.2fr 1.8fr; }
+    .container {
+      padding:10px;
+      display:grid;
+      gap:10px;
+      grid-template-columns:1.2fr 1.8fr;
+    }
     @media (max-width:900px) {
       .container { grid-template-columns:1fr; }
     }
-    .card { background:#fff; border-radius:14px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+    .card {
+      background:#fff;
+      border-radius:14px;
+      padding:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
     h2 { margin:0 0 8px; font-size:1rem; }
     label { display:block; margin-top:6px; font-size:0.85rem; }
+
     input, textarea {
-      width:100%; padding:7px 8px; border-radius:10px; border:1px solid #ddd;
+      width:100%; padding:7px 8px;
+      border-radius:10px; border:1px solid #ddd;
       font-family:inherit; font-size:0.85rem;
+      box-sizing:border-box;
     }
     textarea { min-height:60px; resize:vertical; }
+
     button {
-      margin-top:8px; padding:7px 10px; border-radius:10px;
+      margin-top:8px; padding:7px 10px;
+      border-radius:10px;
       border:none; background:#0d6efd; color:#fff;
-      font-family:inherit; font-size:0.85rem; cursor:pointer;
+      font-family:inherit; font-size:0.85rem;
+      cursor:pointer;
     }
-    table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-top:6px; }
-    th, td { border:1px solid #eee; padding:4px 6px; }
+
+    table {
+      width:100%; border-collapse:collapse;
+      font-size:0.8rem; margin-top:6px;
+    }
+    th, td {
+      border:1px solid #eee;
+      padding:4px 6px;
+    }
     th { background:#f1f3f7; }
   </style>
 </head>
@@ -71,9 +94,12 @@
     </div>
     <div class="nav-buttons" id="navButtons"></div>
   </header>
+
   <div class="container">
+    <!-- إضافة قاعدة -->
     <div class="card">
       <h2>إضافة قاعدة جديدة</h2>
+
       <label>نوع القاعدة</label>
       <input id="ruleType" placeholder="مثال: رفع منتج / صور / عامة" />
 
@@ -93,12 +119,16 @@
       <div id="ruleMsg" style="margin-top:6px;font-size:0.8rem;color:#0a7;"></div>
     </div>
 
+    <!-- أحدث القواعد -->
     <div class="card">
       <h2>أحدث القواعد</h2>
       <table>
         <thead>
           <tr>
-            <th>#</th><th>نوع</th><th>عنوان</th><th>فئات</th>
+            <th>#</th>
+            <th>نوع</th>
+            <th>عنوان</th>
+            <th>فئات</th>
           </tr>
         </thead>
         <tbody id="rulesBody"></tbody>
@@ -107,7 +137,9 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzun10zsjO4I2xhhvo_j09n9QL6Y_q0ssJ9wisGfK7f1Q8ORcbEe3vjqYCZ5MSDp_3I/exec";
+    // ⬅️ رابط الـ API الجديد
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -133,31 +165,31 @@
       return rolesText.includes(code);
     }
 
-    function renderNav(activeCode) {
+    function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
 
-const links = [
-  { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
-  { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
-  { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
-  { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-  { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
-  { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
-];
+      const links = [
+        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",       label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
+        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",     label: "إدارة الأفكار", href: "ideas_admin.html" }
+      ];
 
       links.forEach(item => {
-        if (hasRole(item.code)) {
-          const btn = document.createElement("button");
-          btn.textContent = item.label;
-          if (activeCode === item.code) btn.classList.add("active");
-          btn.onclick = () => {
-            if (window.location.pathname.endsWith(item.href)) return;
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
             window.location.href = item.href;
-          };
-          container.appendChild(btn);
-        }
+          }
+        };
+        container.appendChild(btn);
       });
     }
     // ----------------------
@@ -169,29 +201,39 @@ const links = [
         return;
       }
       user = JSON.parse(str);
-      document.getElementById("adminName").textContent = user.name + " (" + user.role + ")";
-      renderNav("ADMIN");
+
+      // السماح فقط لمن لديه دور ADMIN
+      if (!hasRole("ADMIN")) {
+        window.location.href = "employee.html";
+        return;
+      }
+
+      document.getElementById("adminName").textContent =
+        user.name + " (" + user.role + ")";
+      renderNav("admin.html");
       loadRulesList();
     }
 
     async function saveRule() {
-      const type = document.getElementById("ruleType").value;
-      const cats = document.getElementById("ruleCats").value;
-      const title = document.getElementById("ruleTitle").value;
-      const details = document.getElementById("ruleDetails").value;
-      const examples = document.getElementById("ruleExamples").value;
-      const msg = document.getElementById("ruleMsg");
+      const type     = document.getElementById("ruleType").value.trim();
+      const catsText = document.getElementById("ruleCats").value.trim();
+      const title    = document.getElementById("ruleTitle").value.trim();
+      const details  = document.getElementById("ruleDetails").value.trim();
+      const examples = document.getElementById("ruleExamples").value.trim();
+      const msg      = document.getElementById("ruleMsg");
 
       if (!title || !details) {
-        msg.textContent = "يجب إدخال العنوان والتفاصيل";
+        msg.style.color = "#b91c1c";
+        msg.textContent = "يجب إدخال العنوان والتفاصيل.";
         return;
       }
 
+      msg.style.color = "#374151";
       msg.textContent = "...جاري الحفظ";
 
       const ruleObj = {
         type,
-        categories: cats ? cats.split(",").map(s => s.trim()) : [],
+        categories: catsText ? catsText.split(",").map(s => s.trim()) : [],
         title,
         details,
         examples
@@ -200,28 +242,36 @@ const links = [
       try {
         const res = await callApi("addRule", { ruleObj, adminName: user.name });
         if (res.success) {
+          msg.style.color = "#16a34a";
           msg.textContent = "تم حفظ القاعدة رقم " + res.ruleId;
           loadRulesList();
         } else {
-          msg.textContent = "فشل الحفظ";
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل الحفظ.";
         }
       } catch (err) {
         console.error(err);
-        msg.textContent = "خطأ في الحفظ";
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
       }
     }
 
     async function loadRulesList() {
       const tbody = document.getElementById("rulesBody");
       tbody.innerHTML = '<tr><td colspan="4">...جاري التحميل</td></tr>';
+
       try {
         const res = await callApi("searchRules", { query: "" });
+        const list = res || [];
         tbody.innerHTML = "";
-        if (!res || !res.length) {
+
+        if (!list.length) {
           tbody.innerHTML = '<tr><td colspan="4">لا توجد قواعد</td></tr>';
           return;
         }
-        res.slice(-20).forEach(r => {
+
+        // آخر 20 قاعدة فقط
+        list.slice(-20).forEach(r => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${r.RuleID}</td>
@@ -233,7 +283,8 @@ const links = [
         });
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="4">خطأ في تحميل القواعد</td></tr>';
+        tbody.innerHTML =
+          '<tr><td colspan="4">خطأ في تحميل القواعد</td></tr>';
       }
     }
 
