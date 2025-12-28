@@ -39,7 +39,7 @@
     }
 
     .layout {
-      display:grid; grid-template-columns: 1.6fr 1.4fr; gap:10px; padding:10px;
+      display:grid; grid-template-columns: 1.7fr 1.3fr; gap:10px; padding:10px;
     }
     @media (max-width:900px) {
       .layout { grid-template-columns: 1fr; }
@@ -49,14 +49,29 @@
       box-shadow:0 2px 8px rgba(0,0,0,0.05);
     }
     h2 { margin:0 0 8px; font-size:1rem; }
+
     table { width:100%; border-collapse:collapse; font-size:0.8rem; }
     th, td {
       border:1px solid #eee; padding:4px 6px; text-align:center;
     }
     th { background:#f1f3f7; }
     tr:hover { background:#f9fafc; cursor:pointer; }
+
+    .filters {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+      font-size:0.8rem;
+    }
+    .filters label { font-size:0.75rem; color:#4b5563; }
+    .filters select {
+      padding:4px 6px;
+      border-radius:8px;
+      border:1px solid #ddd;
+      font-family:inherit;
+      font-size:0.8rem;
+    }
+
     .side {
-      max-height:calc(100vh - 90px);
+      max-height:calc(100vh - 100px);
       overflow-y:auto;
     }
     label { display:block; margin-top:6px; font-size:0.85rem; }
@@ -64,19 +79,46 @@
       width:100%; min-height:70px; border-radius:10px;
       border:1px solid #ddd; font-family:inherit; font-size:0.85rem;
     }
-    select { border-radius:8px; border:1px solid #ddd; padding:4px 6px; font-family:inherit; font-size:0.8rem; }
+    select.rule-select {
+      border-radius:8px; border:1px solid #ddd; padding:3px 4px; font-family:inherit; font-size:0.8rem;
+    }
     button {
       margin-top:8px; padding:7px 10px; border-radius:10px;
       border:none; background:#0d6efd; color:#fff;
       font-family:inherit; font-size:0.85rem; cursor:pointer;
     }
+
     .rule-line {
       display:flex; align-items:center; justify-content:space-between;
       border-bottom:1px solid #f1f1f1; padding:3px 0; font-size:0.8rem;
+      gap:6px;
     }
     .rule-line:last-child { border-bottom:none; }
+    .rule-desc { flex:1; }
+    .rule-pts { white-space:nowrap; margin-inline:4px; }
+
     iframe {
-      border:none; width:100%; height:160px; border-radius:10px; margin-top:4px;
+      border:none; width:100%; height:180px; border-radius:10px; margin-top:4px;
+    }
+
+    .badge {
+      display:inline-block;
+      padding:2px 6px;
+      border-radius:999px;
+      font-size:0.72rem;
+      background:#e5e7eb;
+      color:#374151;
+    }
+    .badge-status-open { background:#fee2e2; color:#b91c1c; }
+    .badge-status-done { background:#dcfce7; color:#166534; }
+    .badge-status-pending { background:#fef9c3; color:#854d0e; }
+
+    .quality-summary {
+      margin-top:6px;
+      font-size:0.8rem;
+      padding:6px 8px;
+      border-radius:10px;
+      background:#f3f4f6;
     }
   </style>
 </head>
@@ -96,19 +138,55 @@
     <!-- جدول المهام -->
     <div class="card">
       <h2>المهام المطلوبة للتدقيق</h2>
-      <div style="display:flex;gap:6px;margin-bottom:6px;">
-        <select id="monthFilter" onchange="loadTasks()"></select>
+      <div class="filters">
+        <div>
+          <label>الشهر</label><br/>
+          <select id="filterMonth" onchange="renderTasks()"></select>
+        </div>
+        <div>
+          <label>حالة التدقيق</label><br/>
+          <select id="filterStatus" onchange="renderTasks()">
+            <option value="OPEN">غير مدقق / يحتاج تعديل</option>
+            <option value="ALL">الكل</option>
+            <option value="تم التدقيق">تم التدقيق</option>
+            <option value="غير مدقق">غير مدقق فقط</option>
+            <option value="يحتاج تعديل">يحتاج تعديل فقط</option>
+            <option value="مرفوض">مرفوض فقط</option>
+          </select>
+        </div>
+        <div>
+          <label>الموظف</label><br/>
+          <select id="filterEmployee" onchange="renderTasks()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>نوع المهمة</label><br/>
+          <select id="filterTaskType" onchange="renderTasks()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>تصنيف المنتج</label><br/>
+          <select id="filterCategory" onchange="renderTasks()">
+            <option value="">الكل</option>
+          </select>
+        </div>
       </div>
-      <div style="max-height:calc(100vh - 140px);overflow-y:auto;">
+
+      <div style="max-height:calc(100vh - 170px);overflow-y:auto;">
         <table>
           <thead>
             <tr>
               <th>#</th>
-              <th>موظف</th>
-              <th>تاريخ</th>
-              <th>نوع</th>
+              <th>كود الموظف</th>
+              <th>اسم الموظف</th>
+              <th>نوع المهمة</th>
               <th>كود المنتج</th>
+              <th>التصنيف</th>
+              <th>تاريخ المهمة</th>
               <th>حالة التدقيق</th>
+              <th>نقاط الجودة</th>
             </tr>
           </thead>
           <tbody id="tasksBody"></tbody>
@@ -139,8 +217,10 @@
     }
 
     let user = null;
+    let allTasks = [];
     let currentTaskId = null;
     let currentQualityRules = [];
+    let currentTaskObj = null;
 
     function logout() {
       localStorage.removeItem("taskUser");
@@ -191,7 +271,12 @@
       document.getElementById("audName").textContent = user.name + " (" + user.role + ")";
       renderNav("AUDITOR");
 
-      const sel = document.getElementById("monthFilter");
+      initMonthFilter();
+      loadTasksFromServer();
+    }
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
       const now = new Date();
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -203,37 +288,143 @@
         opt.textContent = key;
         sel.appendChild(opt);
       }
-      loadTasks();
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.insertBefore(allOpt, sel.firstChild);
+      sel.value = "";
     }
 
-    async function loadTasks() {
-      const monthKey = document.getElementById("monthFilter").value;
+    async function loadTasksFromServer() {
       const tbody = document.getElementById("tasksBody");
-      tbody.innerHTML = '<tr><td colspan="6">...جاري التحميل</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9">...جاري التحميل</td></tr>';
       try {
-        const list = await callApi("getTasksForAudit", { filters: { monthKey } });
-        tbody.innerHTML = "";
-        if (!list || list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6">لا توجد مهام</td></tr>';
-          return;
-        }
-        list.forEach(t => {
-          const tr = document.createElement("tr");
-          tr.onclick = () => loadAuditDetails(t.TaskID);
-          tr.innerHTML = `
-            <td>${t.TaskID}</td>
-            <td>${t.EmployeeName}</td>
-            <td>${t.TaskDate ? new Date(t.TaskDate).toLocaleDateString("ar-SY") : ""}</td>
-            <td>${t.TaskType || ""}</td>
-            <td>${t.ProductCode || ""}</td>
-            <td>${t.AuditStatus || ""}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+        const list = await callApi("getTasksForAudit", { filters: {} });
+        allTasks = list || [];
+        buildFilterLists();
+        renderTasks();
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="6">خطأ في تحميل المهام</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9">خطأ في تحميل المهام</td></tr>';
       }
+    }
+
+    function buildFilterLists() {
+      const empSel = document.getElementById("filterEmployee");
+      const typeSel = document.getElementById("filterTaskType");
+      const catSel = document.getElementById("filterCategory");
+
+      empSel.innerHTML = '<option value="">الكل</option>';
+      typeSel.innerHTML = '<option value="">الكل</option>';
+      catSel.innerHTML = '<option value="">الكل</option>';
+
+      const empSet = new Set();
+      const typeSet = new Set();
+      const catSet = new Set();
+
+      allTasks.forEach(t => {
+        if (t.EmployeeName) empSet.add(t.EmployeeName + '|' + t.EmployeeCode);
+        if (t.TaskType) typeSet.add(t.TaskType);
+        if (t.ProductCategory) catSet.add(t.ProductCategory);
+      });
+
+      empSet.forEach(v => {
+        const [name, code] = v.split('|');
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name + ' (' + code + ')';
+        empSel.appendChild(opt);
+      });
+
+      typeSet.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        typeSel.appendChild(opt);
+      });
+
+      catSet.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        catSel.appendChild(opt);
+      });
+    }
+
+    function renderTasks() {
+      const tbody = document.getElementById("tasksBody");
+      tbody.innerHTML = "";
+
+      if (!allTasks.length) {
+        tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام</td></tr>';
+        return;
+      }
+
+      const monthVal = document.getElementById("filterMonth").value;
+      const statusVal = document.getElementById("filterStatus").value;
+      const empVal = document.getElementById("filterEmployee").value;
+      const typeVal = document.getElementById("filterTaskType").value;
+      const catVal = document.getElementById("filterCategory").value;
+
+      const filtered = allTasks.filter(t => {
+        if (monthVal) {
+          if (!t.TaskDate) return false;
+          const d = new Date(t.TaskDate);
+          const key = d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2);
+          if (key !== monthVal) return false;
+        }
+
+        if (statusVal === 'OPEN') {
+          if (t.AuditStatus === 'تم التدقيق') return false;
+        } else if (
+          statusVal === 'غير مدقق' ||
+          statusVal === 'يحتاج تعديل' ||
+          statusVal === 'تم التدقيق' ||
+          statusVal === 'مرفوض'
+        ) {
+          if (t.AuditStatus !== statusVal) return false;
+        }
+
+        if (empVal && t.EmployeeCode !== empVal) return false;
+        if (typeVal && t.TaskType !== typeVal) return false;
+        if (catVal && t.ProductCategory !== catVal) return false;
+
+        return true;
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="9">لا توجد مهام مطابقة للفلاتر الحالية</td></tr>';
+        return;
+      }
+
+      filtered.forEach(t => {
+        const tr = document.createElement("tr");
+        tr.onclick = () => loadAuditDetails(t.TaskID);
+
+        let dateTxt = "";
+        if (t.TaskDate) {
+          dateTxt = new Date(t.TaskDate).toLocaleDateString("ar-SY");
+        }
+
+        let badgeClass = "";
+        if (t.AuditStatus === 'تم التدقيق') badgeClass = "badge badge-status-done";
+        else if (t.AuditStatus === 'يحتاج تعديل') badgeClass = "badge badge-status-pending";
+        else if (t.AuditStatus === 'مرفوض') badgeClass = "badge badge-status-open";
+        else badgeClass = "badge badge-status-open";
+
+        tr.innerHTML = `
+          <td>${t.TaskID}</td>
+          <td>${t.EmployeeCode || ""}</td>
+          <td>${t.EmployeeName || ""}</td>
+          <td>${t.TaskType || ""}</td>
+          <td>${t.ProductCode || ""}</td>
+          <td>${t.ProductCategory || ""}</td>
+          <td>${dateTxt}</td>
+          <td><span class="${badgeClass}">${t.AuditStatus || "غير مدقق"}</span></td>
+          <td>${t.QualityEarned || 0}/${t.QualityPossible || 0}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     async function loadAuditDetails(taskId) {
@@ -247,37 +438,49 @@
           return;
         }
         currentQualityRules = res.qualityRules || [];
-        const t = res.task;
+        currentTaskObj = res.task;
         const p = res.product;
 
         let html = "";
-        html += `<div><strong>الموظف:</strong> ${t.EmployeeName || ""}</div>`;
-        html += `<div><strong>تاريخ المهمة:</strong> ${t.TaskDate ? new Date(t.TaskDate).toLocaleDateString("ar-SY") : ""}</div>`;
-        html += `<div><strong>نوع المهمة:</strong> ${t.TaskType || ""}</div>`;
-        html += `<div><strong>كود المنتج:</strong> ${t.ProductCode || ""}</div>`;
+        html += `<div><strong>الموظف:</strong> ${res.task.EmployeeName || ""} (${res.task.EmployeeCode || ""})</div>`;
+        html += `<div><strong>تاريخ المهمة:</strong> ${res.task.TaskDate ? new Date(res.task.TaskDate).toLocaleDateString("ar-SY") : ""}</div>`;
+        html += `<div><strong>نوع المهمة:</strong> ${res.task.TaskType || ""}</div>`;
+        html += `<div><strong>كود المنتج:</strong> ${res.task.ProductCode || ""}</div>`;
+        html += `<div><strong>تصنيف المنتج:</strong> ${res.task.ProductCategory || ""}</div>`;
+
+        html += `<div><strong>تنفيذ ملاحظات التدقيق:</strong> ${
+          res.task.EmployeeFollowUp === 'YES'
+            ? 'نعم'
+            : res.task.EmployeeFollowUp === 'NO'
+            ? 'لا'
+            : 'غير محدد'
+        }</div>`;
 
         if (p) {
-          html += `<hr><div><strong>المنتج:</strong> ${p.ProductName || ""}</div>`;
-          html += `<div><strong>رابط المنتج:</strong> <a href="${p.ProductURL}" target="_blank">فتح في تبويب جديد</a></div>`;
+          html += `<hr><div><strong>المنتج:</strong> ${p.ProductName || ""} (${p.ProductCode || ""})</div>`;
           if (p.ProductURL) {
+            html += `<div><strong>رابط المنتج:</strong> <a href="${p.ProductURL}" target="_blank">فتح في تبويب جديد</a></div>`;
             html += `<iframe src="${p.ProductURL}"></iframe>`;
           }
         }
 
-        html += `<hr><div><strong>تقييم الجودة:</strong></div>`;
+        html += `<hr><div><strong>بنود الجودة:</strong></div>`;
         if (!currentQualityRules.length) {
-          html += `<div>لا توجد قواعد جودة لهذا المنتج.</div>`;
+          html += `<div>لا توجد قواعد جودة لهذا المنتج / هذه المهمة.</div>`;
         } else {
           html += `<div id="rulesContainer">`;
           currentQualityRules.forEach((r, idx) => {
             html += `
               <div class="rule-line">
-                <span>${r.Description} (${r.Points} نقطة)</span>
-                <select data-rule-index="${idx}">
-                  <option value="none">بدون أثر</option>
-                  <option value="correct">صح</option>
-                  <option value="wrong">خطأ</option>
-                </select>
+                <div class="rule-desc">${r.Description}</div>
+                <div class="rule-pts">${r.Points} نقطة</div>
+                <div>
+                  <select class="rule-select" data-rule-index="${idx}" onchange="updateQualityPreview()">
+                    <option value="none">لا ينطبق</option>
+                    <option value="correct">صح</option>
+                    <option value="wrong">خطأ</option>
+                  </select>
+                </div>
               </div>
             `;
           });
@@ -285,23 +488,57 @@
         }
 
         html += `
+          <div class="quality-summary" id="qualitySummary">
+            مجموع النقاط: 0 / 0 (0%)
+          </div>
+
           <label>ملاحظات المدقق للموظف</label>
-          <textarea id="audNotes">${t.AuditorNotes || ""}</textarea>
+          <textarea id="audNotes">${res.task.AuditorNotes || ""}</textarea>
+
           <label>حالة التدقيق</label>
           <select id="audStatus">
-            <option value="تم التدقيق">تم التدقيق</option>
-            <option value="يحتاج تعديل">يحتاج تعديل</option>
-            <option value="مرفوض">مرفوض</option>
+            <option value="تم التدقيق"${res.task.AuditStatus === 'تم التدقيق' ? ' selected' : ''}>تم التدقيق</option>
+            <option value="يحتاج تعديل"${res.task.AuditStatus === 'يحتاج تعديل' ? ' selected' : ''}>يحتاج تعديل</option>
+            <option value="غير مدقق"${res.task.AuditStatus === 'غير مدقق' ? ' selected' : ''}>غير مدقق</option>
+            <option value="مرفوض"${res.task.AuditStatus === 'مرفوض' ? ' selected' : ''}>مرفوض</option>
           </select>
+
           <button onclick="saveAuditClick()">حفظ التدقيق</button>
           <div style="margin-top:4px;font-size:0.8rem;color:#0a7;" id="audMsg"></div>
         `;
 
         container.innerHTML = html;
+        updateQualityPreview();
+
       } catch (err) {
         console.error(err);
         container.textContent = "خطأ في تحميل تفاصيل التدقيق";
       }
+    }
+
+    function updateQualityPreview() {
+      const summary = document.getElementById("qualitySummary");
+      if (!summary || !currentQualityRules.length) return;
+
+      const selects = document.querySelectorAll("#rulesContainer select");
+      let totalPossible = 0;
+      let totalEarned = 0;
+
+      selects.forEach(sel => {
+        const idx = Number(sel.getAttribute("data-rule-index"));
+        const r = currentQualityRules[idx];
+        const pts = Number(r.Points) || 0;
+
+        totalPossible += pts;
+        if (sel.value === 'correct') {
+          totalEarned += pts;
+        }
+      });
+
+      let percent = 0;
+      if (totalPossible > 0) percent = (totalEarned / totalPossible) * 100;
+
+      summary.textContent = `مجموع النقاط: ${totalEarned} / ${totalPossible} (${percent.toFixed(1)}%)`;
     }
 
     async function saveAuditClick() {
@@ -332,7 +569,13 @@
         });
         if (res.success) {
           msg.textContent = `تم الحفظ. نقاط الجودة: ${res.totalEarned}/${res.totalPossible} (${res.percent.toFixed(1)}%)`;
-          loadTasks();
+          const t = allTasks.find(x => x.TaskID === currentTaskId);
+          if (t) {
+            t.AuditStatus = status;
+            t.QualityEarned = res.totalEarned;
+            t.QualityPossible = res.totalPossible;
+          }
+          renderTasks();
         } else {
           msg.textContent = "فشل الحفظ";
         }
