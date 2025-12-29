@@ -93,10 +93,12 @@
     </table>
   </div>
 
+  <!-- ✅ ملف الإعدادات المشترك لكل الواجهات -->
+  <script src="config.js"></script>
+
   <script>
-    // ✅ رابط الـ API الصحيح
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // استخدام رابط الـ API من config.js
+    const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -123,7 +125,8 @@
       return rolesText.includes(code);
     }
 
-    function renderNav(activeCode) {
+    // نفس نمط باقي الصفحات: نمرر href ونفعّل الزر حسب الملف
+    function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
@@ -141,7 +144,7 @@
         if (!hasRole(item.code)) return;
         const btn = document.createElement("button");
         btn.textContent = item.label;
-        if (activeCode === item.code) btn.classList.add("active");
+        if (activeHref === item.href) btn.classList.add("active");
         btn.onclick = () => {
           if (!window.location.pathname.endsWith(item.href)) {
             window.location.href = item.href;
@@ -161,17 +164,19 @@
       user = JSON.parse(str);
 
       // السماح فقط لمن لديه دور EVALUATOR
-      if (!hasRole("EVALUATOR")) {
+      if (!hasRole("EVALUATOR") && !hasRole("ADMIN")) {
+        // ممكن تسمح للأدمن يشوفها أيضاً
         window.location.href = "employee.html";
         return;
       }
 
       document.getElementById("evalName").textContent =
         user.name + " (" + user.role + ")";
-      renderNav("EVALUATOR");
+      renderNav("evaluator.html");
 
       const sel = document.getElementById("monthFilter");
       const now = new Date();
+      sel.innerHTML = "";
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
@@ -182,6 +187,7 @@
         opt.textContent = key;
         sel.appendChild(opt);
       }
+      // افتراضياً أول قيمة هي الشهر الحالي، نحمّل بياناته
       loadEvaluation();
     }
 
