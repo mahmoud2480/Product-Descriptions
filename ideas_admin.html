@@ -153,10 +153,12 @@
     </div>
   </div>
 
+  <!-- ✅ ملف الإعدادات المشترك -->
+  <script src="config.js"></script>
+
   <script>
-    // ✅ رابط الـ API
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // ✅ استخدام رابط الـ API من config.js
+    const API_URL = window.API_URL;
 
     // ✅ دالة API مع حماية من رد غير JSON
     async function callApi(action, payload) {
@@ -196,12 +198,12 @@
       container.innerHTML = "";
 
       const links = [
-        { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
-        { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
-        { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",       label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
         { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-        { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
-        { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
+        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",     label: "إدارة الأفكار", href: "ideas_admin.html" }
       ];
 
       links.forEach(item => {
