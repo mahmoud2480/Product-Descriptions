@@ -150,10 +150,12 @@
     </div>
   </div>
 
+  <!-- ✅ ملف الإعدادات المشترك -->
+  <script src="config.js"></script>
+
   <script>
-    // ✅ API URL الصحيح
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // استخدام رابط الـ API من config.js
+    const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -184,12 +186,12 @@
       container.innerHTML = "";
 
       const links = [
-        { code: "EMP",     label: "واجهة الموظف",   href: "employee.html" },
-        { code: "EMP",     label: "أفكار الموظف",   href: "ideas.html" },
-        { code: "AUDITOR", label: "لوحة المدقق",   href: "auditor.html" },
+        { code: "EMP",       label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",       label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR",   label: "لوحة المدقق",   href: "auditor.html" },
         { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-        { code: "ADMIN",   label: "لوحة الإدارة",  href: "admin.html" },
-        { code: "ADMIN",   label: "إدارة الأفكار", href: "ideas_admin.html" }
+        { code: "ADMIN",     label: "لوحة الإدارة",  href: "admin.html" },
+        { code: "ADMIN",     label: "إدارة الأفكار", href: "ideas_admin.html" }
       ];
 
       links.forEach(item => {
@@ -209,6 +211,13 @@
     function initMonthFilter() {
       const sel = document.getElementById("filterMonth");
       const now = new Date();
+      sel.innerHTML = "";
+
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.appendChild(allOpt);
+
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
@@ -219,10 +228,7 @@
         opt.textContent = key;
         sel.appendChild(opt);
       }
-      const allOpt = document.createElement("option");
-      allOpt.value = "";
-      allOpt.textContent = "كل الأشهر";
-      sel.insertBefore(allOpt, sel.firstChild);
+
       sel.value = "";
     }
 
