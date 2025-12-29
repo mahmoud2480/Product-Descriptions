@@ -282,10 +282,12 @@
     </div>
   </div>
 
+  <!-- ✅ تحميل إعدادات الـ API المشتركة -->
+  <script src="config.js"></script>
+
   <script>
-    // ✅ رابط الـ API الصحيح
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // استخدام الرابط القادم من config.js
+    const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
