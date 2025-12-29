@@ -649,27 +649,40 @@ async function searchRulesClick() {
   listEl.innerHTML = "...بحث";
 
   try {
-    // طلب مشترك: القواعد + شيت war
     const [rulesRes, warRes] = await Promise.all([
       callApi("searchRules", { query: q }),
-      callApi("searchWar",  { code: q })
+      callApi("searchWar", { code: q })
     ]);
 
     const rules = Array.isArray(rulesRes) ? rulesRes : [];
-    const war   = warRes || {};
+    const war = warRes || {};
 
-    const warehouseList = Array.isArray(war.warehouseList)  ? war.warehouseList  : [];
-    const supplierList  = Array.isArray(war.supplierList)   ? war.supplierList   : [];
-    const quantityList  = Array.isArray(war.quantityList)   ? war.quantityList   : [];
+    // من الـ API
+    const warehouseList = Array.isArray(war.warehouseList) ? war.warehouseList : [];
+    const supplierList  = Array.isArray(war.supplierList)  ? war.supplierList  : [];
+    const quantityList  = Array.isArray(war.quantityList)  ? war.quantityList  : [];
 
     const hasWarehouse = warehouseList.length > 0;
-    const hasSupplier  = supplierList.length  > 0;
-    const hasQuantity  = quantityList.length  > 0;
+    const hasSupplier  = supplierList.length > 0;
+    const hasQuantity  = quantityList.length > 0;
 
     if (!rules.length && !hasWarehouse && !hasSupplier && !hasQuantity) {
       listEl.innerHTML = "<div>لا توجد قواعد أو بيانات مطابقة لهذا البحث.</div>";
       return;
     }
+
+    // ⛳ أفضل Score لكل من المورد والكمية (للتلوين فقط)
+    let bestSupplierScore = 0;
+    supplierList.forEach(s => {
+      const sc = Number(s._score || 0);
+      if (sc > bestSupplierScore) bestSupplierScore = sc;
+    });
+
+    let bestQuantityScore = 0;
+    quantityList.forEach(qi => {
+      const sc = Number(qi._score || 0);
+      if (sc > bestQuantityScore) bestQuantityScore = sc;
+    });
 
     let html = "";
 
@@ -688,9 +701,11 @@ async function searchRulesClick() {
       html += `<hr/>`;
     }
 
-    // 2) Warehouse (كل السجلات) – أول سجل هو الأفضل
+    // 2) Warehouse – التلوين دائماً لأوّل سجل فقط (أفضل + أحدث)
     if (hasWarehouse) {
-      html += `<div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>`;
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>
+      `;
       warehouseList.forEach((w, idx) => {
         let tsFormatted = "";
         if (w.timestamp) {
@@ -700,15 +715,15 @@ async function searchRulesClick() {
             : d.toLocaleString("ar-SY");
         }
 
-        const boxStyle = (idx === 0)
-          ? 'background:#ffe5e5;border:1px solid #f00;border-radius:10px;padding:4px;'
-          : 'border:1px solid #eee;border-radius:10px;padding:4px;';
+        const isBest = idx === 0; // ✅ في الويرهاوس: الأفضل + الأحدث فقط
+        const boxStyle = isBest
+          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
+          : "margin-bottom:4px;";
 
         html += `
-          <div class="rule-item" style="margin-bottom:4px;${boxStyle}">
-            <div style="font-weight:600;font-size:0.8rem;">${idx + 1}) سجل Warehouse</div>
+          <div class="rule-item" style="${boxStyle}">
             <div><strong>كود المنتج:</strong> ${w.code || ""}</div>
-            <div><strong>الحالة:</strong> ${w.status || ""}</div>
+            <div><strong>حالة المنتج:</strong> ${w.status || ""}</div>
             <div><strong>الرف:</strong> ${w.shelf || ""}</div>
             <div><strong>التخزين:</strong> ${w.storage || ""}</div>
             <div><strong>المخزن الثاني:</strong> ${w.storage2 || ""}</div>
@@ -723,9 +738,11 @@ async function searchRulesClick() {
       html += `<hr/>`;
     }
 
-    // 3) الموردين – جميع السجلات المتطابقة، وأفضل واحد باللون الأحمر
+    // 3) المورد – التلوين لأقرب / أفضل تطابق فقط (أعلى _score)
     if (hasSupplier) {
-      html += `<div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>`;
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
+      `;
       supplierList.forEach((s, idx) => {
         let dateFormatted = "";
         if (s.lastPurchaseDate) {
@@ -735,13 +752,15 @@ async function searchRulesClick() {
             : d.toLocaleString("ar-SY");
         }
 
-        const boxStyle = (idx === 0)
-          ? 'background:#ffe5e5;border:1px solid #f00;border-radius:10px;padding:4px;'
-          : 'border:1px solid #eee;border-radius:10px;padding:4px;';
+        const sc = Number(s._score || 0);
+        const isBest = bestSupplierScore > 0 && sc === bestSupplierScore;
+        const boxStyle = isBest
+          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
+          : "margin-bottom:4px;";
 
         html += `
-          <div class="rule-item" style="margin-bottom:4px;${boxStyle}">
-            <div style="font-weight:600;font-size:0.8rem;">${idx + 1}) سجل مورد</div>
+          <div class="rule-item" style="${boxStyle}">
+            <div><strong>سجل مورد (${idx + 1})</strong></div>
             <div><strong>كود المنتج:</strong> ${s.code || ""}</div>
             <div><strong>اسم المورد:</strong> ${s.supplierName || ""}</div>
             <div><strong>تاريخ آخر شراء:</strong> ${dateFormatted || ""}</div>
@@ -752,17 +771,21 @@ async function searchRulesClick() {
       html += `<hr/>`;
     }
 
-    // 4) الكميات – جميع السجلات المتطابقة، وأفضل واحد بالأحمر
+    // 4) الكمية – التلوين لأقرب / أفضل تطابق فقط (أعلى _score)
     if (hasQuantity) {
-      html += `<div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>`;
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
+      `;
       quantityList.forEach((qd, idx) => {
-        const boxStyle = (idx === 0)
-          ? 'background:#ffe5e5;border:1px solid #f00;border-radius:10px;padding:4px;'
-          : 'border:1px solid #eee;border-radius:10px;padding:4px;';
+        const sc = Number(qd._score || 0);
+        const isBest = bestQuantityScore > 0 && sc === bestQuantityScore;
+        const boxStyle = isBest
+          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
+          : "margin-bottom:4px;";
 
         html += `
-          <div class="rule-item" style="margin-bottom:4px;${boxStyle}">
-            <div style="font-weight:600;font-size:0.8rem;">${idx + 1}) سجل كمية</div>
+          <div class="rule-item" style="${boxStyle}">
+            <div><strong>سجل كمية (${idx + 1})</strong></div>
             <div><strong>كود المنتج:</strong> ${qd.code || ""}</div>
             <div><strong>الكمية:</strong> ${qd.qty || ""}</div>
             <div><strong>التكلفة:</strong> ${qd.cost || ""}</div>
@@ -778,6 +801,7 @@ async function searchRulesClick() {
     listEl.innerHTML = "<div>خطأ في البحث</div>";
   }
 }
+
 
 
     document.addEventListener("DOMContentLoaded", loadUser);
