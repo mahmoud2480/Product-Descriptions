@@ -410,28 +410,56 @@
       document.getElementById("assignedSection").style.display =
         (val === "مهمة موكلة") ? "block" : "none";
     }
+// إضافة مهمة جديدة إلى قائمة المهام الحالية (بدون حفظ في الشيت بعد)
+function addCurrentTask() {
+  const msg = document.getElementById("saveMsg");
+  msg.textContent = "";
 
-    // إضافة مهمة جديدة إلى قائمة المهام الحالية (بدون حفظ في الشيت بعد)
-    function addCurrentTask() {
-      const msg = document.getElementById("saveMsg");
-      msg.textContent = "";
+  const taskType = document.getElementById("taskType").value;
+  const productCode = document.getElementById("productCode").value.trim();
+  const productCategory = document.getElementById("productCategory").value;
+  const branchCount = document.getElementById("branchCount").value;
+  const assignedText = document.getElementById("assignedText").value;
+  const assignedLink = document.getElementById("assignedLink").value;
+  const taskDate = document.getElementById("taskDate").value;
 
-      const taskType = document.getElementById("taskType").value;
-      const productCode = document.getElementById("productCode").value.trim();
-      const productCategory = document.getElementById("productCategory").value;
-      const branchCount = document.getElementById("branchCount").value;
-      const assignedText = document.getElementById("assignedText").value;
-      const assignedLink = document.getElementById("assignedLink").value;
-      const taskDate = document.getElementById("taskDate").value;
+  if (!taskType) {
+    msg.textContent = "يرجى اختيار نوع المهمة";
+    return;
+  }
+  if (taskType === "رفع منتج" && !productCode) {
+    msg.textContent = "يرجى إدخال كود المنتج لمهمة رفع المنتج";
+    return;
+  }
 
-      if (!taskType) {
-        msg.textContent = "يرجى اختيار نوع المهمة";
-        return;
-      }
-      if (taskType === "رفع منتج" && !productCode) {
-        msg.textContent = "يرجى إدخال كود المنتج لمهمة رفع المنتج";
-        return;
-      }
+  const obj = {
+    id: nextLocalId++,
+    employeeCode: user.employeeCode,
+    employeeName: user.name,
+    taskDate,
+    taskType,
+    productCode,
+    productCategory,
+    branchCount,
+    assignedText,
+    assignedLink,
+    seconds: 0,
+    // 👈 يبدأ العداد مباشرة بعد الإضافة
+    running: true,
+    status: "running"   // كانت "new"
+  };
+
+  currentTasks.push(obj);
+  renderCurrentTasks();
+
+  // تفريغ الحقول الخاصة بالمهمة (لكن نترك التاريخ ونوع المهمة)
+  document.getElementById("productCode").value = "";
+  document.getElementById("branchCount").value = "";
+  document.getElementById("assignedText").value = "";
+  document.getElementById("assignedLink").value = "";
+  msg.textContent = "تمت إضافة المهمة إلى قائمة المهام الحالية وبدأ العداد تلقائياً.";
+}
+
 
       const obj = {
         id: nextLocalId++,
