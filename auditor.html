@@ -288,9 +288,12 @@
     </div>
   </div>
 
+  <!-- ✅ تحميل إعدادات الـ API المشتركة -->
+  <script src="config.js"></script>
+
   <script>
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // استخدام الرابط القادم من config.js
+    const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
       const res = await fetch(API_URL, {
@@ -366,7 +369,6 @@
         sel.appendChild(opt);
       }
 
-      // افتراضي: الشهر الحالي
       const currentKey =
         now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
       sel.value = currentKey;
@@ -500,7 +502,9 @@
           (t.QualityEarned || 0) +
           " / " +
           (t.QualityPossible || 0) +
-          (t.QualityPossible ? " (" + (t.QualityPercent || 0).toFixed?.(0) + "%)" : "");
+          (t.QualityPossible
+            ? " (" + (t.QualityPercent || 0).toFixed?.(0) + "%)"
+            : "");
 
         tr.innerHTML = `
           <td>${t.TaskID}</td>
@@ -623,7 +627,6 @@
           <div class="msg" id="auditMsg"></div>
         `;
 
-        // تحديث ملخص الجودة عند تغيير الاختيارات
         const rulesContainer = document.getElementById("rulesContainer");
         if (rulesContainer && rules.length) {
           rulesContainer.addEventListener("change", updateQualitySummary);
