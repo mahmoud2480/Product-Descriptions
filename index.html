@@ -88,7 +88,7 @@
     <h1>نظام المهام - تسجيل الدخول</h1>
     <p>أدخل اسم المستخدم وكلمة المرور الخاصة بك</p>
 
-    <!-- ✅ تم وضع الحقول داخل form -->
+    <!-- ✅ الحقول داخل form -->
     <form id="loginForm">
       <div class="field">
         <label for="username">اسم المستخدم</label>
@@ -106,13 +106,19 @@
     <div class="msg" id="loginMsg"></div>
   </div>
 
+  <!-- ✅ ملف الإعدادات المشترك -->
+  <script src="config.js"></script>
+
   <script>
-    // ✅ رابط الـ API الجديد
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwack6uFyrJQhcaJ_DzX9MKfnetBIRZw-k_C0JX2ME3f8Kust45s1czKY_RCtp5kEzw/exec";
+    // ✅ استخدام رابط الـ API من config.js
+    const API_URL = window.API_URL;
 
     // استدعاء عام للـ API
     async function callApi(action, payload) {
+      if (!API_URL) {
+        throw new Error("API_URL غير معرّف. تأكد من ملف config.js");
+      }
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -122,7 +128,7 @@
       return JSON.parse(text);
     }
 
-    // ✅ دالة تسجيل الدخول (async في المستوى الأعلى – لا يوجد خطأ Syntax)
+    // ✅ دالة تسجيل الدخول
     async function doLogin(event) {
       event.preventDefault(); // منع إعادة تحميل الصفحة
 
