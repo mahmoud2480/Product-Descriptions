@@ -628,117 +628,133 @@
       // لو لم ينجح التحويل نعرض النص كما هو
       return ts;
     }
+// 🔍 بحث القواعد + ورقة war بنفس مربع البحث
+async function searchRulesClick() {
+  const q = document.getElementById("ruleQuery").value.trim();
+  const listEl = document.getElementById("rulesList");
+  if (!q) {
+    listEl.innerHTML = "<div>اكتب كود أو عبارة للبحث.</div>";
+    return;
+  }
 
-    // 🔍 بحث القواعد + ورقة war بنفس مربع البحث
-    async function searchRulesClick() {
-      const q = document.getElementById("ruleQuery").value.trim();
-      const listEl = document.getElementById("rulesList");
-      if (!q) {
-        listEl.innerHTML = "<div>اكتب كود أو عبارة للبحث.</div>";
-        return;
-      }
+  listEl.innerHTML = "...بحث";
 
-      listEl.innerHTML = "...بحث";
+  try {
+    // نعمل الطلبين معاً: القواعد + شيت war
+    const [rulesRes, warRes] = await Promise.all([
+      callApi("searchRules", { query: q }),
+      callApi("searchWar", { code: q })
+    ]);
 
-      try {
-        // نعمل الطلبين معاً: القواعد + شيت war
-        const [rulesRes, warRes] = await Promise.all([
-          callApi("searchRules", { query: q }),
-          callApi("searchWar", { code: q })
-        ]);
+    const rules = Array.isArray(rulesRes) ? rulesRes : [];
+    const war = warRes || {};
 
-        const rules = Array.isArray(rulesRes) ? rulesRes : [];
-        const war = warRes || {};
+    // من السكربت الجديد: warehouseList (قد تكون []), warehouse (أحدث واحد)
+    const warehouseList = Array.isArray(war.warehouseList) ? war.warehouseList : [];
+    const hasWarehouse  = warehouseList.length > 0;
+    const hasSupplier   = !!war.supplier;
+    const hasQuantity   = !!war.quantity;
 
-        const warehouses = Array.isArray(war.warehouses) ? war.warehouses : [];
-        const hasWarehouse = warehouses.length > 0;
-        const hasSupplier  = !!war.supplier;
-        const hasQuantity  = !!war.quantity;
-
-        if (!rules.length && !hasWarehouse && !hasSupplier && !hasQuantity) {
-          listEl.innerHTML = "<div>لا توجد قواعد أو بيانات مطابقة لهذا البحث.</div>";
-          return;
-        }
-
-        let html = "";
-
-        // 1) النتائج من القواعد
-        if (rules.length) {
-          html += `<div style="margin-bottom:8px;font-weight:600;">نتائج القواعد:</div>`;
-          rules.forEach(r => {
-            html += `
-              <div class="rule-item">
-                <div class="rule-title">${r.Title || ""}</div>
-                <div>${r.Details || ""}</div>
-                <div style="color:#666;font-size:0.75rem;">فئات: ${r.Categories || ""}</div>
-              </div>
-            `;
-          });
-          html += `<hr/>`;
-        }
-
-        // 2) كل سجلات Warehouse من ورقة war (من الأحدث إلى الأقدم)
-        if (hasWarehouse) {
-          html += `
-            <div style="margin-bottom:6px;font-weight:600;">
-              سجلات الـ Warehouse (من الأحدث إلى الأقدم):
-            </div>
-          `;
-          warehouses.forEach((w, idx) => {
-            html += `
-              <div class="rule-item">
-                <div style="font-size:0.8rem;color:#6b7280;">محاولة رقم ${idx + 1}</div>
-                <div><strong>كود المنتج:</strong> ${w.code || ""}</div>
-                <div><strong>حالة المنتج:</strong> ${w.status || ""}</div>
-                <div><strong>الرف:</strong> ${w.shelf || ""}</div>
-                <div><strong>التخزين:</strong> ${w.storage || ""}</div>
-                <div><strong>المخزن الثاني:</strong> ${w.storage2 || ""}</div>
-                <div><strong>كمية على الرف:</strong> ${w.shelfAddedQty || ""}</div>
-                <div><strong>كمية في التخزين:</strong> ${w.storageQty || ""}</div>
-                <div><strong>تحقق:</strong> ${w.check || ""}</div>
-                <div><strong>اسم الموظف:</strong> ${w.employee || ""}</div>
-                <div><strong>الطابع الزمني:</strong> ${formatTimestamp(w.timestamp)}</div>
-              </div>
-            `;
-          });
-          html += `<hr/>`;
-        }
-
-        // 3) بيانات المورد
-        if (hasSupplier) {
-          const s = war.supplier;
-          html += `
-            <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
-            <div class="rule-item">
-              <div><strong>كود المنتج:</strong> ${s.code || ""}</div>
-              <div><strong>اسم المورد:</strong> ${s.supplierName || ""}</div>
-              <div><strong>تاريخ آخر شراء:</strong> ${formatTimestamp(s.lastPurchaseDate)}</div>
-              <div><strong>كلفة آخر شراء:</strong> ${s.lastPurchaseCost || ""}</div>
-            </div>
-            <hr/>
-          `;
-        }
-
-        // 4) بيانات الكمية
-        if (hasQuantity) {
-          const qd = war.quantity;
-          html += `
-            <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
-            <div class="rule-item">
-              <div><strong>كود المنتج:</strong> ${qd.code || ""}</div>
-              <div><strong>الكمية:</strong> ${qd.qty || ""}</div>
-              <div><strong>التكلفة:</strong> ${qd.cost || ""}</div>
-            </div>
-          `;
-        }
-
-        listEl.innerHTML = html;
-
-      } catch (err) {
-        console.error(err);
-        listEl.innerHTML = "<div>خطأ في البحث</div>";
-      }
+    if (!rules.length && !hasWarehouse && !hasSupplier && !hasQuantity) {
+      listEl.innerHTML = "<div>لا توجد قواعد أو بيانات مطابقة لهذا البحث.</div>";
+      return;
     }
+
+    let html = "";
+
+    // 1) نتائج القواعد
+    if (rules.length) {
+      html += `<div style="margin-bottom:8px;font-weight:600;">نتائج القواعد:</div>`;
+      rules.forEach(r => {
+        html += `
+          <div class="rule-item">
+            <div class="rule-title">${r.Title || ""}</div>
+            <div>${r.Details || ""}</div>
+            <div style="color:#666;font-size:0.75rem;">فئات: ${r.Categories || ""}</div>
+          </div>
+        `;
+      });
+      html += `<hr/>`;
+    }
+
+    // 2) كل سجلات Warehouse من الأحدث للأقدم
+    if (hasWarehouse) {
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>
+      `;
+      warehouseList.forEach((w, idx) => {
+        // تنسيق التاريخ بشكل جميل إن أمكن
+        let tsFormatted = "";
+        if (w.timestamp) {
+          const d = new Date(w.timestamp);
+          tsFormatted = isNaN(d.getTime())
+            ? w.timestamp
+            : d.toLocaleString("ar-SY");
+        }
+
+        html += `
+          <div class="rule-item" style="margin-bottom:4px;">
+            <div style="font-weight:600;font-size:0.8rem;">${idx + 1}) سجل رقم ${idx + 1}</div>
+            <div><strong>كود المنتج:</strong> ${w.code || ""}</div>
+            <div><strong>حالة المنتج:</strong> ${w.status || ""}</div>
+            <div><strong>الرف:</strong> ${w.shelf || ""}</div>
+            <div><strong>التخزين:</strong> ${w.storage || ""}</div>
+            <div><strong>المخزن الثاني:</strong> ${w.storage2 || ""}</div>
+            <div><strong>كمية على الرف:</strong> ${w.shelfAddedQty || ""}</div>
+            <div><strong>كمية في التخزين:</strong> ${w.storageQty || ""}</div>
+            <div><strong>تحقق:</strong> ${w.check || ""}</div>
+            <div><strong>اسم الموظف:</strong> ${w.employee || ""}</div>
+            <div><strong>الطابع الزمني:</strong> ${tsFormatted || ""}</div>
+          </div>
+        `;
+      });
+      html += `<hr/>`;
+    }
+
+    // 3) بيانات المورد
+    if (hasSupplier) {
+      const s = war.supplier;
+      let dateFormatted = "";
+      if (s.lastPurchaseDate) {
+        const d = new Date(s.lastPurchaseDate);
+        dateFormatted = isNaN(d.getTime())
+          ? s.lastPurchaseDate
+          : d.toLocaleString("ar-SY");
+      }
+
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
+        <div class="rule-item">
+          <div><strong>كود المنتج:</strong> ${s.code || ""}</div>
+          <div><strong>اسم المورد:</strong> ${s.supplierName || ""}</div>
+          <div><strong>تاريخ آخر شراء:</strong> ${dateFormatted || ""}</div>
+          <div><strong>كلفة آخر شراء:</strong> ${s.lastPurchaseCost || ""}</div>
+        </div>
+        <hr/>
+      `;
+    }
+
+    // 4) بيانات الكمية
+    if (hasQuantity) {
+      const qd = war.quantity;
+      html += `
+        <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
+        <div class="rule-item">
+          <div><strong>كود المنتج:</strong> ${qd.code || ""}</div>
+          <div><strong>الكمية:</strong> ${qd.qty || ""}</div>
+          <div><strong>التكلفة:</strong> ${qd.cost || ""}</div>
+        </div>
+      `;
+    }
+
+    listEl.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    listEl.innerHTML = "<div>خطأ في البحث</div>";
+  }
+}
+
 
     document.addEventListener("DOMContentLoaded", loadUser);
   </script>
