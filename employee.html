@@ -181,6 +181,12 @@
       text-decoration: underline;
       font-size: 0.75rem;
     }
+    /* ✅ شكل النص بعد تنفيذ الملاحظات */
+    .followup-done {
+      color: #16a34a;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
 
     /* تمييز النتيجة المطبقة */
     .best-match {
@@ -576,36 +582,74 @@
       }
     }
 
+    // ✅ تحميل مهام الموظف السابقة (مرتبة من الأحدث إلى الأقدم + حالة تنفيذ الملاحظات)
     async function loadEmployeeTasks() {
       const tbody = document.querySelector("#tasksTable tbody");
       tbody.innerHTML = '<tr><td colspan="9">...جاري التحميل</td></tr>';
+
       try {
         const list = await callApi("getEmployeeTasks", {
           employeeCode: user.employeeCode
         });
+
         tbody.innerHTML = "";
+
         if (!list || !list.length) {
           tbody.innerHTML =
             '<tr><td colspan="9">لا توجد مهام مسجلة بعد</td></tr>';
           return;
         }
+
+        // ترتيب من الأحدث إلى الأقدم (نعتمد CreatedAt ثم TaskDate ثم TaskID)
+        list.sort((a, b) => {
+          const dA = a.CreatedAt
+            ? new Date(a.CreatedAt)
+            : (a.TaskDate ? new Date(a.TaskDate) : 0);
+          const dB = b.CreatedAt
+            ? new Date(b.CreatedAt)
+            : (b.TaskDate ? new Date(b.TaskDate) : 0);
+
+          const diff = dB - dA; // الأحدث أولاً
+          if (diff !== 0) return diff;
+
+          return (Number(b.TaskID) || 0) - (Number(a.TaskID) || 0);
+        });
+
         list.forEach(t => {
           const tr = document.createElement("tr");
+
+          const dateText = t.TaskDate
+            ? new Date(t.TaskDate).toLocaleDateString("ar-SY")
+            : "";
+
+          const qEarned   = Number(t.QualityEarned  || 0);
+          const qPossible = Number(t.QualityPossible || 0);
+          const qText     = qPossible
+            ? `${qEarned}/${qPossible}`
+            : (qEarned ? String(qEarned) : "");
+
+          // شكل خانة "تنفيذ الملاحظات"
+          let followUpCell = "";
+          if (t.EmployeeFollowUp === "YES") {
+            followUpCell = `<span class="followup-done">تم التنفيذ</span>`;
+          } else {
+            followUpCell = `<span class="followup-btn" onclick="markFollowUp(${t.TaskID}, true)">تنفيذ</span>`;
+          }
+
           tr.innerHTML = `
             <td>${t.TaskID || ""}</td>
-            <td>${t.TaskDate ? new Date(t.TaskDate).toLocaleDateString("ar-SY") : ""}</td>
+            <td>${dateText}</td>
             <td>${t.TaskType || ""}</td>
             <td>${t.ProductCode || ""}</td>
             <td>${t.DurationMinutes || ""}</td>
             <td>${t.AuditStatus || ""}</td>
-            <td>${t.QualityEarned || ""}/${t.QualityPossible || ""}</td>
+            <td>${qText}</td>
             <td style="max-width:160px;">${t.AuditorNotes || ""}</td>
-            <td>
-              <span class="followup-btn" onclick="markFollowUp(${t.TaskID}, true)">تم التنفيذ</span>
-            </td>
+            <td>${followUpCell}</td>
           `;
           tbody.appendChild(tr);
         });
+
       } catch (err) {
         console.error(err);
         tbody.innerHTML =
@@ -626,183 +670,156 @@
       }
       return ts;
     }
-// دالة بسيطة لتوحيد الكود في الواجهة (لأجل التلوين فقط)
-function normalizeCodeFront(str) {
-  if (!str) return "";
-  return str
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[–—−\-]/g, "")   // إزالة كل أنواع الشرطة
-    .replace(/[^a-z0-9]/g, ""); // إبقاء حروف إنجليزية وأرقام فقط
-}
 
-// 🔍 بحث القواعد + ورقة war بنفس مربع البحث
-async function searchRulesClick() {
-  const q = document.getElementById("ruleQuery").value.trim();
-  const listEl = document.getElementById("rulesList");
-  if (!q) {
-    listEl.innerHTML = "<div>اكتب كود أو عبارة للبحث.</div>";
-    return;
-  }
-
-  listEl.innerHTML = "...بحث";
-
-  try {
-    const [rulesRes, warRes] = await Promise.all([
-      callApi("searchRules", { query: q }),
-      callApi("searchWar", { code: q })
-    ]);
-
-    const rules = Array.isArray(rulesRes) ? rulesRes : [];
-    const war = warRes || {};
-
-    // من الـ API
-    const warehouseList = Array.isArray(war.warehouseList) ? war.warehouseList : [];
-    const supplierList  = Array.isArray(war.supplierList)  ? war.supplierList  : [];
-    const quantityList  = Array.isArray(war.quantityList)  ? war.quantityList  : [];
-
-    const hasWarehouse = warehouseList.length > 0;
-    const hasSupplier  = supplierList.length > 0;
-    const hasQuantity  = quantityList.length > 0;
-
-    if (!rules.length && !hasWarehouse && !hasSupplier && !hasQuantity) {
-      listEl.innerHTML = "<div>لا توجد قواعد أو بيانات مطابقة لهذا البحث.</div>";
-      return;
+    // دالة بسيطة لتوحيد الكود في الواجهة (لأجل التلوين فقط)
+    function normalizeCodeFront(str) {
+      if (!str) return "";
+      return str
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[–—−\-]/g, "")   // إزالة كل أنواع الشرطة
+        .replace(/[^a-z0-9]/g, ""); // إبقاء حروف إنجليزية وأرقام فقط
     }
 
-    // ⛳ أفضل Score لكل من المورد والكمية (للتلوين فقط)
-    let bestSupplierScore = 0;
-    supplierList.forEach(s => {
-      const sc = Number(s._score || 0);
-      if (sc > bestSupplierScore) bestSupplierScore = sc;
-    });
+    // 🔍 بحث القواعد + ورقة war بنفس مربع البحث
+    async function searchRulesClick() {
+      const q = document.getElementById("ruleQuery").value.trim();
+      const listEl = document.getElementById("rulesList");
+      if (!q) {
+        listEl.innerHTML = "<div>اكتب كود أو عبارة للبحث.</div>";
+        return;
+      }
 
-    let bestQuantityScore = 0;
-    quantityList.forEach(qi => {
-      const sc = Number(qi._score || 0);
-      if (sc > bestQuantityScore) bestQuantityScore = sc;
-    });
+      listEl.innerHTML = "...بحث";
 
-    let html = "";
+      try {
+        const [rulesRes, warRes] = await Promise.all([
+          callApi("searchRules", { query: q }),
+          callApi("searchWar", { code: q })
+        ]);
 
-    // 1) نتائج القواعد
-    if (rules.length) {
-      html += `<div style="margin-bottom:8px;font-weight:600;">نتائج القواعد:</div>`;
-      rules.forEach(r => {
-        html += `
-          <div class="rule-item">
-            <div class="rule-title">${r.Title || ""}</div>
-            <div>${r.Details || ""}</div>
-            <div style="color:#666;font-size:0.75rem;">فئات: ${r.Categories || ""}</div>
-          </div>
-        `;
-      });
-      html += `<hr/>`;
-    }
+        const rules = Array.isArray(rulesRes) ? rulesRes : [];
+        const war = warRes || {};
 
-    // 2) Warehouse – التلوين دائماً لأوّل سجل فقط (أفضل + أحدث)
-    if (hasWarehouse) {
-      html += `
-        <div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>
-      `;
-      warehouseList.forEach((w, idx) => {
-        let tsFormatted = "";
-        if (w.timestamp) {
-          const d = new Date(w.timestamp);
-          tsFormatted = isNaN(d.getTime())
-            ? w.timestamp
-            : d.toLocaleString("ar-SY");
+        // من الـ API
+        const warehouseList = Array.isArray(war.warehouseList) ? war.warehouseList : [];
+        const supplierList  = Array.isArray(war.supplierList)  ? war.supplierList  : [];
+        const quantityList  = Array.isArray(war.quantityList)  ? war.quantityList  : [];
+
+        const hasWarehouse = warehouseList.length > 0;
+        const hasSupplier  = supplierList.length > 0;
+        const hasQuantity  = quantityList.length > 0;
+
+        if (!rules.length && !hasWarehouse && !hasSupplier && !hasQuantity) {
+          listEl.innerHTML = "<div>لا توجد قواعد أو بيانات مطابقة لهذا البحث.</div>";
+          return;
         }
 
-        const isBest = idx === 0; // ✅ في الويرهاوس: الأفضل + الأحدث فقط
-        const boxStyle = isBest
-          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
-          : "margin-bottom:4px;";
+        let html = "";
 
-        html += `
-          <div class="rule-item" style="${boxStyle}">
-            <div><strong>كود المنتج:</strong> ${w.code || ""}</div>
-            <div><strong>حالة المنتج:</strong> ${w.status || ""}</div>
-            <div><strong>الرف:</strong> ${w.shelf || ""}</div>
-            <div><strong>التخزين:</strong> ${w.storage || ""}</div>
-            <div><strong>المخزن الثاني:</strong> ${w.storage2 || ""}</div>
-            <div><strong>كمية على الرف:</strong> ${w.shelfAddedQty || ""}</div>
-            <div><strong>كمية في التخزين:</strong> ${w.storageQty || ""}</div>
-            <div><strong>تحقق:</strong> ${w.check || ""}</div>
-            <div><strong>اسم الموظف:</strong> ${w.employee || ""}</div>
-            <div><strong>الطابع الزمني:</strong> ${tsFormatted || ""}</div>
-          </div>
-        `;
-      });
-      html += `<hr/>`;
-    }
-
-    // 3) المورد – التلوين لأقرب / أفضل تطابق فقط (أعلى _score)
-    if (hasSupplier) {
-      html += `
-        <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
-      `;
-      supplierList.forEach((s, idx) => {
-        let dateFormatted = "";
-        if (s.lastPurchaseDate) {
-          const d = new Date(s.lastPurchaseDate);
-          dateFormatted = isNaN(d.getTime())
-            ? s.lastPurchaseDate
-            : d.toLocaleString("ar-SY");
+        // 1) نتائج القواعد
+        if (rules.length) {
+          html += `<div style="margin-bottom:8px;font-weight:600;">نتائج القواعد:</div>`;
+          rules.forEach(r => {
+            html += `
+              <div class="rule-item">
+                <div class="rule-title">${r.Title || ""}</div>
+                <div>${r.Details || ""}</div>
+                <div style="color:#666;font-size:0.75rem;">فئات: ${r.Categories || ""}</div>
+              </div>
+            `;
+          });
+          html += `<hr/>`;
         }
 
-        const sc = Number(s._score || 0);
-        const isBest = bestSupplierScore > 0 && sc === bestSupplierScore;
-        const boxStyle = isBest
-          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
-          : "margin-bottom:4px;";
+        // 2) Warehouse – تمييز أول نتيجة (الأقرب + الأحدث حسب السيرفر)
+        if (hasWarehouse) {
+          html += `
+            <div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>
+          `;
+          warehouseList.forEach((w, idx) => {
+            let tsFormatted = "";
+            if (w.timestamp) {
+              const d = new Date(w.timestamp);
+              tsFormatted = isNaN(d.getTime())
+                ? w.timestamp
+                : d.toLocaleString("ar-SY");
+            }
 
-        html += `
-          <div class="rule-item" style="${boxStyle}">
-            <div><strong>سجل مورد (${idx + 1})</strong></div>
-            <div><strong>كود المنتج:</strong> ${s.code || ""}</div>
-            <div><strong>اسم المورد:</strong> ${s.supplierName || ""}</div>
-            <div><strong>تاريخ آخر شراء:</strong> ${dateFormatted || ""}</div>
-            <div><strong>كلفة آخر شراء:</strong> ${s.lastPurchaseCost || ""}</div>
-          </div>
-        `;
-      });
-      html += `<hr/>`;
+            const boxStyle = idx === 0
+              ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
+              : "margin-bottom:4px;";
+
+            html += `
+              <div class="rule-item" style="${boxStyle}">
+                <div><strong>كود المنتج:</strong> ${w.code || ""}</div>
+                <div><strong>حالة المنتج:</strong> ${w.status || ""}</div>
+                <div><strong>الرف:</strong> ${w.shelf || ""}</div>
+                <div><strong>التخزين:</strong> ${w.storage || ""}</div>
+                <div><strong>المخزن الثاني:</strong> ${w.storage2 || ""}</div>
+                <div><strong>كمية على الرف:</strong> ${w.shelfAddedQty || ""}</div>
+                <div><strong>كمية في التخزين:</strong> ${w.storageQty || ""}</div>
+                <div><strong>تحقق:</strong> ${w.check || ""}</div>
+                <div><strong>اسم الموظف:</strong> ${w.employee || ""}</div>
+                <div><strong>الطابع الزمني:</strong> ${tsFormatted || ""}</div>
+              </div>
+            `;
+          });
+          html += `<hr/>`;
+        }
+
+        // 3) المورد – عرض عادي (بدون اعتماد على _score من السيرفر)
+        if (hasSupplier) {
+          html += `
+            <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
+          `;
+          supplierList.forEach((s, idx) => {
+            let dateFormatted = "";
+            if (s.lastPurchaseDate) {
+              const d = new Date(s.lastPurchaseDate);
+              dateFormatted = isNaN(d.getTime())
+                ? s.lastPurchaseDate
+                : d.toLocaleString("ar-SY");
+            }
+
+            html += `
+              <div class="rule-item" style="margin-bottom:4px;">
+                <div><strong>سجل مورد (${idx + 1})</strong></div>
+                <div><strong>كود المنتج:</strong> ${s.code || ""}</div>
+                <div><strong>اسم المورد:</strong> ${s.supplierName || ""}</div>
+                <div><strong>تاريخ آخر شراء:</strong> ${dateFormatted || ""}</div>
+                <div><strong>كلفة آخر شراء:</strong> ${s.lastPurchaseCost || ""}</div>
+              </div>
+            `;
+          });
+          html += `<hr/>`;
+        }
+
+        // 4) الكمية – عرض عادي
+        if (hasQuantity) {
+          html += `
+            <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
+          `;
+          quantityList.forEach((qd, idx) => {
+            html += `
+              <div class="rule-item" style="margin-bottom:4px;">
+                <div><strong>سجل كمية (${idx + 1})</strong></div>
+                <div><strong>كود المنتج:</strong> ${qd.code || ""}</div>
+                <div><strong>الكمية:</strong> ${qd.qty || ""}</div>
+                <div><strong>التكلفة:</strong> ${qd.cost || ""}</div>
+              </div>
+            `;
+          });
+        }
+
+        listEl.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        listEl.innerHTML = "<div>خطأ في البحث</div>";
+      }
     }
-
-    // 4) الكمية – التلوين لأقرب / أفضل تطابق فقط (أعلى _score)
-    if (hasQuantity) {
-      html += `
-        <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
-      `;
-      quantityList.forEach((qd, idx) => {
-        const sc = Number(qd._score || 0);
-        const isBest = bestQuantityScore > 0 && sc === bestQuantityScore;
-        const boxStyle = isBest
-          ? "background:#fee2e2;border:1px solid #f97373;border-radius:12px;padding:4px 6px;margin-bottom:4px;"
-          : "margin-bottom:4px;";
-
-        html += `
-          <div class="rule-item" style="${boxStyle}">
-            <div><strong>سجل كمية (${idx + 1})</strong></div>
-            <div><strong>كود المنتج:</strong> ${qd.code || ""}</div>
-            <div><strong>الكمية:</strong> ${qd.qty || ""}</div>
-            <div><strong>التكلفة:</strong> ${qd.cost || ""}</div>
-          </div>
-        `;
-      });
-    }
-
-    listEl.innerHTML = html;
-
-  } catch (err) {
-    console.error(err);
-    listEl.innerHTML = "<div>خطأ في البحث</div>";
-  }
-}
-
-
 
     document.addEventListener("DOMContentLoaded", loadUser);
   </script>
