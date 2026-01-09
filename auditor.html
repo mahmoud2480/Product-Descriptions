@@ -79,7 +79,6 @@
       font-size: 1rem;
     }
 
-    /* جدول المهام */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -119,7 +118,6 @@
       font-size: 0.8rem;
     }
 
-    /* تفاصيل التدقيق */
     label {
       display: block;
       margin-top: 6px;
@@ -234,8 +232,8 @@
       <div class="filters">
         <div>
           <label>الشهر</label><br />
-          <!-- نفس الاستدعاء القديم، وسيتم التصفية أيضًا في الواجهة -->
-          <select id="filterMonth" onchange="reloadTasks()"></select>
+          <!-- 🔹 الفلتر سيعمل من الواجهة مباشرة -->
+          <select id="filterMonth" onchange="applyFiltersAndRender()"></select>
         </div>
         <div>
           <label>حالة التدقيق</label><br />
@@ -248,7 +246,7 @@
         </div>
         <div>
           <label>الموظف</label><br />
-          <select id="filterEmployee" onchange="reloadTasks()">
+          <select id="filterEmployee" onchange="applyFiltersAndRender()">
             <option value="">الكل</option>
           </select>
         </div>
@@ -289,11 +287,10 @@
     </div>
   </div>
 
-  <!-- ✅ تحميل إعدادات الـ API المشتركة -->
+  <!-- إعدادات الـ API -->
   <script src="config.js"></script>
 
   <script>
-    // استخدام الرابط القادم من config.js
     const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
@@ -359,6 +356,7 @@
       allOpt.textContent = "كل الأشهر";
       sel.appendChild(allOpt);
 
+      // آخر 6 أشهر (بما فيهم الشهر الحالي)
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
@@ -372,7 +370,7 @@
 
       const currentKey =
         now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
-      sel.value = currentKey;
+      sel.value = currentKey; // مبدئياً نعرض شهر اليوم
     }
 
     function loadUser() {
@@ -383,7 +381,6 @@
       }
       user = JSON.parse(str);
 
-      // فقط AUDITOR أو ADMIN
       if (!hasRole("AUDITOR") && !hasRole("ADMIN")) {
         window.location.href = "employee.html";
         return;
@@ -396,22 +393,20 @@
       reloadTasks();
     }
 
+    // 🔹 هنا نطلب كل المهام من السيرفر (بدون فلتر شهر/موظف)
     async function reloadTasks() {
       const tbody = document.getElementById("tasksBody");
       tbody.innerHTML = "<tr><td colspan='9'>...جاري التحميل</td></tr>";
 
-      const monthKey = document.getElementById("filterMonth").value || null;
-      const empCode  = document.getElementById("filterEmployee").value || null;
-
       try {
         const res = await callApi("getTasksForAudit", {
-          filters: { monthKey: monthKey, employeeCode: empCode },
+          filters: {}   // لا نرسل monthKey ولا employeeCode
         });
 
         allTasks = res || [];
         buildEmployeeFilterFromData();
         buildCategoryFilterFromData();
-        applyFiltersAndRender();   // سيتم تطبيق الفلاتر بما فيها الشهر
+        applyFiltersAndRender();
       } catch (err) {
         console.error(err);
         tbody.innerHTML =
@@ -464,7 +459,7 @@
       }
     }
 
-    // ✅ هنا تم تفعيل فلتر الشهر والموظف من جهة الواجهة أيضًا
+    // ✅ الفلترة كاملة من جهة الواجهة (بما فيها الشهر)
     function applyFiltersAndRender() {
       const tbody = document.getElementById("tasksBody");
       if (!allTasks.length) {
@@ -482,25 +477,26 @@
       const empCode  = document.getElementById("filterEmployee").value || "";
 
       const filtered = allTasks.filter((t) => {
-        // فلتر الشهر
+        // 1) فلتر الشهر: نحسب YYYY-MM من TaskDate
         if (monthKey) {
           if (!t.TaskDate) return false;
-          const d = new Date(t.TaskDate);
+          const dt = new Date(t.TaskDate);
+          if (isNaN(dt.getTime())) return false;
           const key =
-            d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+            dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2);
           if (key !== monthKey) return false;
         }
 
-        // فلتر الموظف
+        // 2) الموظف
         if (empCode && String(t.EmployeeCode || "") !== empCode) return false;
 
-        // فلتر حالة التدقيق
+        // 3) حالة التدقيق
         if (status && String(t.AuditStatus || "") !== status) return false;
 
-        // فلتر نوع المهمة
+        // 4) نوع المهمة
         if (type && String(t.TaskType || "") !== type) return false;
 
-        // فلتر تصنيف المنتج
+        // 5) تصنيف المنتج
         if (cat && String(t.ProductCategory || "") !== cat) return false;
 
         return true;
@@ -520,13 +516,14 @@
         const d = t.TaskDate
           ? new Date(t.TaskDate).toLocaleDateString("ar-SY")
           : "";
+        const qualityEarned  = Number(t.QualityEarned || 0);
+        const qualityPossible= Number(t.QualityPossible || 0);
+        const percent = qualityPossible > 0
+          ? Math.round((qualityEarned / qualityPossible) * 100)
+          : 0;
         const qualityText =
-          (t.QualityEarned || 0) +
-          " / " +
-          (t.QualityPossible || 0) +
-          (t.QualityPossible
-            ? " (" + (t.QualityPercent || 0).toFixed?.(0) + "%)"
-            : "");
+          qualityEarned + " / " + qualityPossible +
+          (qualityPossible ? " (" + percent + "%)" : "");
 
         tr.innerHTML = `
           <td>${t.TaskID}</td>
@@ -634,15 +631,9 @@
 
           <label>حالة التدقيق</label>
           <select id="auditStatus">
-            <option value="غير مدقق"${
-              task.AuditStatus === "غير مدقق" ? " selected" : ""
-            }>غير مدقق</option>
-            <option value="تم التدقيق"${
-              task.AuditStatus === "تم التدقيق" ? " selected" : ""
-            }>تم التدقيق</option>
-            <option value="يحتاج تعديل"${
-              task.AuditStatus === "يحتاج تعديل" ? " selected" : ""
-            }>يحتاج تعديل</option>
+            <option value="غير مدقق"${task.AuditStatus === "غير مدقق" ? " selected" : ""}>غير مدقق</option>
+            <option value="تم التدقيق"${task.AuditStatus === "تم التدقيق" ? " selected" : ""}>تم التدقيق</option>
+            <option value="يحتاج تعديل"${task.AuditStatus === "يحتاج تعديل" ? " selected" : ""}>يحتاج تعديل</option>
           </select>
 
           <button onclick="saveAudit()">حفظ التدقيق</button>
