@@ -1,2 +1,2 @@
 // ملف إعدادات مشترك لكل الواجهات
-window.API_URL = "https://script.google.com/macros/s/AKfycbzRrHmv5nVLapn2ywFogvHfN5Y83zZUx5SpRi1Dhka7MY-1Y07_WfPZf2yRb7hYTmyj/exec";
+window.API_URL = "https://script.google.com/macros/s/AKfycbxPnBJbCpl1A3GDAqH_tdb3gQM24nr5kIr8I_RTq_1rzNiGY7FlGaVG62URWYppJcUQ/exec";
