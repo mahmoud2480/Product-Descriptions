@@ -93,11 +93,10 @@
     </table>
   </div>
 
-  <!-- ✅ ملف الإعدادات المشترك لكل الواجهات -->
+  <!-- ملف الإعدادات المشترك لكل الواجهات -->
   <script src="config.js"></script>
 
   <script>
-    // استخدام رابط الـ API من config.js
     const API_URL = window.API_URL;
 
     async function callApi(action, payload) {
@@ -107,7 +106,12 @@
         body: JSON.stringify({ action, payload })
       });
       const text = await res.text();
-      return JSON.parse(text);
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error("JSON parse error:", text);
+        throw e;
+      }
     }
 
     let user = null;
@@ -118,14 +122,12 @@
       window.location.href = "index.html";
     }
 
-    // --- الأدوار والتنقل ---
     function hasRole(code) {
       if (!user || !user.role) return false;
       const rolesText = user.role.toString().toUpperCase();
       return rolesText.includes(code);
     }
 
-    // نفس نمط باقي الصفحات: نمرر href ونفعّل الزر حسب الملف
     function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
@@ -153,7 +155,6 @@
         container.appendChild(btn);
       });
     }
-    // ----------------------
 
     function loadUser() {
       const str = localStorage.getItem("taskUser");
@@ -163,9 +164,7 @@
       }
       user = JSON.parse(str);
 
-      // السماح فقط لمن لديه دور EVALUATOR
       if (!hasRole("EVALUATOR") && !hasRole("ADMIN")) {
-        // ممكن تسمح للأدمن يشوفها أيضاً
         window.location.href = "employee.html";
         return;
       }
@@ -177,6 +176,7 @@
       const sel = document.getElementById("monthFilter");
       const now = new Date();
       sel.innerHTML = "";
+      // آخر 6 أشهر بما فيها الحالي
       for (let i = 0; i < 6; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
@@ -187,7 +187,7 @@
         opt.textContent = key;
         sel.appendChild(opt);
       }
-      // افتراضياً أول قيمة هي الشهر الحالي، نحمّل بياناته
+
       loadEvaluation();
     }
 
@@ -195,9 +195,20 @@
       const monthKey = document.getElementById("monthFilter").value;
       const tbody = document.getElementById("evalBody");
       tbody.innerHTML = '<tr><td colspan="10">...جاري التحميل</td></tr>';
+
       try {
         const data = await callApi("getEvaluation", { monthKey });
-        lastData = data || [];
+
+        // لو السيرفر رجّع كائن خطأ
+        if (!Array.isArray(data)) {
+          console.warn("getEvaluation response:", data);
+          tbody.innerHTML =
+            '<tr><td colspan="10">لا توجد بيانات (أو خطأ في الاستعلام)</td></tr>';
+          lastData = [];
+          return;
+        }
+
+        lastData = data;
         renderTable(lastData);
       } catch (err) {
         console.error(err);
@@ -210,15 +221,17 @@
       const tbody = document.getElementById("evalBody");
       tbody.innerHTML = "";
 
-      const sortBy = document.getElementById("sortBy").value;
-      data = data.slice().sort((a, b) => (b[sortBy] || 0) - (a[sortBy] || 0));
-
-      if (!data.length) {
+      if (!Array.isArray(data) || !data.length) {
         tbody.innerHTML = '<tr><td colspan="10">لا توجد بيانات</td></tr>';
         return;
       }
 
-      data.forEach((r, idx) => {
+      const sortBy = document.getElementById("sortBy").value;
+      const sorted = data.slice().sort(
+        (a, b) => (b[sortBy] || 0) - (a[sortBy] || 0)
+      );
+
+      sorted.forEach((r, idx) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${idx + 1}</td>
