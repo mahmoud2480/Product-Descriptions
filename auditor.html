@@ -234,6 +234,7 @@
       <div class="filters">
         <div>
           <label>الشهر</label><br />
+          <!-- نفس الاستدعاء القديم، وسيتم التصفية أيضًا في الواجهة -->
           <select id="filterMonth" onchange="reloadTasks()"></select>
         </div>
         <div>
@@ -326,12 +327,12 @@
       container.innerHTML = "";
 
       const links = [
-        { code: "EMP", label: "واجهة الموظف", href: "employee.html" },
-        { code: "EMP", label: "أفكار الموظف", href: "ideas.html" },
-        { code: "AUDITOR", label: "لوحة المدقق", href: "auditor.html" },
-        { code: "EVALUATOR", label: "واجهة التقييم", href: "evaluator.html" },
-        { code: "ADMIN", label: "لوحة الإدارة", href: "admin.html" },
-        { code: "ADMIN", label: "إدارة الأفكار", href: "ideas_admin.html" },
+        { code: "EMP",      label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",      label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR",  label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "ADMIN",    label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",    label: "إدارة الأفكار",  href: "ideas_admin.html" },
       ];
 
       links.forEach((item) => {
@@ -400,7 +401,7 @@
       tbody.innerHTML = "<tr><td colspan='9'>...جاري التحميل</td></tr>";
 
       const monthKey = document.getElementById("filterMonth").value || null;
-      const empCode = document.getElementById("filterEmployee").value || null;
+      const empCode  = document.getElementById("filterEmployee").value || null;
 
       try {
         const res = await callApi("getTasksForAudit", {
@@ -410,7 +411,7 @@
         allTasks = res || [];
         buildEmployeeFilterFromData();
         buildCategoryFilterFromData();
-        applyFiltersAndRender();
+        applyFiltersAndRender();   // سيتم تطبيق الفلاتر بما فيها الشهر
       } catch (err) {
         console.error(err);
         tbody.innerHTML =
@@ -463,6 +464,7 @@
       }
     }
 
+    // ✅ هنا تم تفعيل فلتر الشهر والموظف من جهة الواجهة أيضًا
     function applyFiltersAndRender() {
       const tbody = document.getElementById("tasksBody");
       if (!allTasks.length) {
@@ -473,14 +475,34 @@
         return;
       }
 
-      const status = document.getElementById("filterStatus").value || "";
-      const type = document.getElementById("filterTaskType").value || "";
-      const cat = document.getElementById("filterCategory").value || "";
+      const monthKey = document.getElementById("filterMonth").value || "";
+      const status   = document.getElementById("filterStatus").value || "";
+      const type     = document.getElementById("filterTaskType").value || "";
+      const cat      = document.getElementById("filterCategory").value || "";
+      const empCode  = document.getElementById("filterEmployee").value || "";
 
       const filtered = allTasks.filter((t) => {
+        // فلتر الشهر
+        if (monthKey) {
+          if (!t.TaskDate) return false;
+          const d = new Date(t.TaskDate);
+          const key =
+            d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+          if (key !== monthKey) return false;
+        }
+
+        // فلتر الموظف
+        if (empCode && String(t.EmployeeCode || "") !== empCode) return false;
+
+        // فلتر حالة التدقيق
         if (status && String(t.AuditStatus || "") !== status) return false;
+
+        // فلتر نوع المهمة
         if (type && String(t.TaskType || "") !== type) return false;
+
+        // فلتر تصنيف المنتج
         if (cat && String(t.ProductCategory || "") !== cat) return false;
+
         return true;
       });
 
