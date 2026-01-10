@@ -282,8 +282,8 @@
     }
 
     let user = null;
-    let employees = [];     // [{EmployeeCode, EmployeeName, Department, ...}]
-    let tests = [];         // [{MonthKey, EmployeeCode, EmployeeName, Score, Notes, UpdatedAt}]
+    let employees = []; // [{EmployeeCode, EmployeeName, ...}]
+    let tests = [];     // [{MonthKey, EmployeeCode, EmployeeName, TestScore, Notes, UpdatedAt}]
     let currentSelectedEmp = null;
 
     function logout() {
@@ -317,14 +317,14 @@
       container.innerHTML = "";
 
       const links = [
-        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
-        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
-        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
-        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "EMP",              label: "واجهة الموظف",    href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",    href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",     href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",   href: "evaluator.html" },
         { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
-        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
-        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-        { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
+        { code: "ADMIN",            label: "لوحة الإدارة",    href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",   href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير ",         href: "reports.html" }
       ];
 
       links.forEach(item => {
@@ -369,7 +369,6 @@
 
       // صلاحية الاختبار الشهري: نفس صلاحيات EVALUATOR و/أو ADMIN
       if (!hasRole("EVALUATOR") && !hasRole("ADMIN")) {
-        // لو ما عنده صلاحية يدخل، يرجع لواجهة الموظف
         window.location.href = "employee.html";
         return;
       }
@@ -385,12 +384,11 @@
 
     async function loadEmployees() {
       try {
-        // ✨ يفترض أن السكربت يرجع { success:true, employees:[...] }
-        const res = await callApi("listEmployees", {});
+        // ✅ استدعاء الأكشن الصحيح من السكربت
+        const res = await callApi("listEmployeesForMonthlyTest", {});
         if (res && res.success && Array.isArray(res.employees)) {
           employees = res.employees;
         } else if (Array.isArray(res)) {
-          // في حال رجع مباشرة مصفوفة بدون success
           employees = res;
         } else {
           employees = [];
@@ -407,11 +405,11 @@
         }
 
         employees.forEach(emp => {
+          const code = emp.EmployeeCode || emp.employeeCode || "";
+          const name = emp.EmployeeName || emp.employeeName || emp.name || "بدون اسم";
           const opt = document.createElement("option");
-          opt.value = emp.EmployeeCode || emp.employeeCode || "";
-          opt.textContent =
-            (emp.EmployeeName || emp.name || "بدون اسم") +
-            " (" + (emp.EmployeeCode || emp.employeeCode || "") + ")";
+          opt.value = code;
+          opt.textContent = name + " (" + code + ")";
           sel.appendChild(opt);
         });
 
@@ -421,7 +419,6 @@
         sel.onchange = () => {
           currentSelectedEmp = sel.value;
           updateEmpCodeDisplay();
-          // لما نغيّر الموظف، لو له نتيجة في هذا الشهر نعبّيها
           fillFormFromExisting();
         };
       } catch (err) {
@@ -442,7 +439,6 @@
       document.getElementById("testsSummary").textContent = "";
 
       try {
-        // ✨ يفترض أن السكربت يرجع { success:true, rows:[...] }
         const res = await callApi("getMonthlyTests", { monthKey });
         if (res && res.success && Array.isArray(res.rows)) {
           tests = res.rows;
@@ -453,13 +449,25 @@
         }
 
         renderTestsTable();
-        // بعد تحميل النتائج نحدّث الفورم حسب الموظف المختار
         fillFormFromExisting();
       } catch (err) {
         console.error(err);
         tbody.innerHTML =
           "<tr><td colspan='5'>خطأ في تحميل بيانات الاختبار الشهري</td></tr>";
       }
+    }
+
+    function getScore10FromRow(row) {
+      // TestScore مخزّن من 0–100 في الشيت
+      if (row == null) return null;
+      const raw =
+        row.TestScore != null
+          ? Number(row.TestScore)
+          : row.Score != null
+            ? Number(row.Score)
+            : null;
+      if (raw == null || isNaN(raw)) return null;
+      return raw / 10; // نعرضه من 10
     }
 
     function renderTestsTable() {
@@ -483,11 +491,12 @@
           row.EmployeeName || row.employeeName || "بدون اسم";
         const code =
           row.EmployeeCode || row.employeeCode || "";
+        const score10 = getScore10FromRow(row);
 
         tr.innerHTML = `
           <td>${idx + 1}</td>
           <td>${name} <span class="badge">${code}</span></td>
-          <td>${row.Score != null ? row.Score : ""}</td>
+          <td>${score10 != null ? score10 : ""}</td>
           <td style="text-align:right">${row.Notes || ""}</td>
           <td>${d}</td>
         `;
@@ -496,7 +505,7 @@
         tr.onclick = () => {
           selectEmployeeFromRow(code);
           document.getElementById("testScore").value =
-            row.Score != null ? row.Score : "";
+            score10 != null ? score10 : "";
           document.getElementById("testNotes").value = row.Notes || "";
           const msg = document.getElementById("formInfo");
           msg.textContent =
@@ -523,6 +532,7 @@
       }
       currentSelectedEmp = empCode;
       updateEmpCodeDisplay();
+      fillFormFromExisting();
     }
 
     function fillFormFromExisting() {
@@ -542,8 +552,9 @@
       );
 
       if (row) {
+        const score10 = getScore10FromRow(row);
         document.getElementById("testScore").value =
-          row.Score != null ? row.Score : "";
+          score10 != null ? score10 : "";
         document.getElementById("testNotes").value = row.Notes || "";
         document.getElementById("formInfo").textContent =
           "تعديل نتيجة موجودة مسبقًا لهذا الموظف في هذا الشهر.";
@@ -579,19 +590,23 @@
         return;
       }
 
-      const score = Number(scoreRaw);
-      if (isNaN(score) || score < 0 || score > 10) {
+      const score10 = Number(scoreRaw);
+      if (isNaN(score10) || score10 < 0 || score10 > 10) {
         msg.style.color = "#b91c1c";
         msg.textContent = "الرجاء إدخال درجة صحيحة بين 0 و 10.";
         return;
       }
 
+      // 🔢 تخزينها من 0–100 في الشيت (متوافق مع السكربت)
+      const score100 = score10 * 10;
+
       try {
         const res = await callApi("saveMonthlyTest", {
           monthKey,
           employeeCode: empCode,
-          score,
-          notes
+          testScore: score100,
+          notes,
+          updatedBy: user ? user.name : ""
         });
 
         if (res && res.success) {
