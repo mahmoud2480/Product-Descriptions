@@ -327,26 +327,26 @@
       window.location.href = "index.html";
     }
 
-    // نفس منطق الأدوار الذي استعملناه في لوحة المدقق (تقدر تعدله حسب عمود Role)
-    function hasRole(code) {
-      if (!user || !user.role) return false;
+function hasRole(code) {
+  if (!user || !user.role) return false;
 
-      const rolesTextUpper = user.role.toString().toUpperCase();
-      const rolesTextRaw   = user.role.toString();
+  const rolesTextUpper = user.role.toString().toUpperCase();
+  const rolesTextRaw   = user.role.toString();
 
-      if (code === "AUDITOR_EXTENDED") {
-        return (
-          rolesTextUpper.includes("AUDITOR") ||
-          rolesTextUpper.includes("ADMIN")   ||
-          rolesTextUpper.includes("MANAGER") ||
-          rolesTextRaw.includes("مدير")     ||
-          rolesTextRaw.includes("رئيس قسم") ||
-          rolesTextRaw.includes("مدقق")
-        );
-      }
+  if (code === "AUDITOR_EXTENDED") {
+    return (
+      rolesTextUpper.includes("AUDITOR") ||
+      rolesTextUpper.includes("ADMIN")   ||
+      rolesTextUpper.includes("MANAGER") ||
+      rolesTextRaw.includes("مدير")     ||
+      rolesTextRaw.includes("رئيس قسم") ||
+      rolesTextRaw.includes("مدقق")
+    );
+  }
 
-      return rolesTextUpper.includes(code);
-    }
+  return rolesTextUpper.includes(code);
+}
+
 
     function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
