@@ -232,7 +232,6 @@
       <div class="filters">
         <div>
           <label>الشهر</label><br />
-          <!-- 🔹 الفلتر سيعمل من الواجهة مباشرة -->
           <select id="filterMonth" onchange="applyFiltersAndRender()"></select>
         </div>
         <div>
@@ -582,14 +581,23 @@
           rulesHtml = rules
             .map((r, index) => {
               const id = "rule_" + index;
+              const status = r.Status || "na"; // correct / wrong / na
+              const ruleId = (r.RuleID != null && r.RuleID !== '') ? r.RuleID : index;
+
               return `
-              <div class="rule-row" data-rule-index="${index}">
+              <div class="rule-row" data-rule-index="${index}" data-rule-id="${ruleId}">
                 <div class="rule-text">${r.Description || ""}</div>
                 <div class="rule-points">${r.Points || 0} نقطة</div>
                 <div class="rule-options">
-                  <label><input type="radio" name="${id}" value="correct" /> ✅ صح</label>
-                  <label><input type="radio" name="${id}" value="wrong" /> ❌ خطأ</label>
-                  <label><input type="radio" name="${id}" value="na" checked /> ⭕ لا ينطبق</label>
+                  <label>
+                    <input type="radio" name="${id}" value="correct" ${status === "correct" ? "checked" : ""} /> ✅ صح
+                  </label>
+                  <label>
+                    <input type="radio" name="${id}" value="wrong" ${status === "wrong" ? "checked" : ""} /> ❌ خطأ
+                  </label>
+                  <label>
+                    <input type="radio" name="${id}" value="na" ${status === "na" ? "checked" : ""} /> ⭕ لا ينطبق
+                  </label>
                 </div>
               </div>
             `;
@@ -699,13 +707,15 @@
 
       rows.forEach((row) => {
         const index = row.getAttribute("data-rule-index");
+        const ruleId = row.getAttribute("data-rule-id"); // RuleID القادم من السيرفر
         const descEl = row.querySelector(".rule-text");
         const ptsText = row.querySelector(".rule-points").textContent || "0";
         const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
         const input = row.querySelector('input[type="radio"]:checked');
         const status = input ? input.value : "na";
+
         ruleResults.push({
-          ruleId: index,
+          ruleId: ruleId != null ? ruleId : index,
           description: descEl ? descEl.textContent : "",
           status: status,
           points: pts,
