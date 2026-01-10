@@ -186,75 +186,59 @@
       window.location.href = "index.html";
     }
 
-function hasRole(code) {
-  if (!user || !user.role) return false;
+    function hasRole(code) {
+      if (!user || !user.role) return false;
 
-  const rolesTextUpper = user.role.toString().toUpperCase();
-  const rolesTextRaw   = user.role.toString();
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
 
-  // صلاحية موسعة: أي شخص فيه (AUDITOR أو ADMIN أو MANAGER أو مدير/رئيس قسم/مدقق)
-  if (code === "AUDITOR_EXTENDED") {
-    return (
-      rolesTextUpper.includes("AUDITOR") ||
-      rolesTextUpper.includes("ADMIN")   ||
-      rolesTextUpper.includes("MANAGER") ||
-      rolesTextRaw.includes("مدير")      ||
-      rolesTextRaw.includes("رئيس قسم")  ||
-      rolesTextRaw.includes("مدقق")
-    );
-  }
-
-  // باقي الأكواد العادية: EMP, ADMIN, EVALUATOR...
-  return rolesTextUpper.includes(code);
-}
-
-
-function renderNav(activeHref) {
-  const container = document.getElementById("navButtons");
-  if (!container) return;
-  container.innerHTML = "";
-
-  const links = [
-    { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
-    { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
-    { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
-    { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
-    { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
-    { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-    { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
-  ];
-
-  links.forEach(item => {
-    if (!hasRole(item.code)) return;
-
-    const btn = document.createElement("button");
-    btn.textContent = item.label;
-
-    // تمييز الزر الحالي
-    if (activeHref === item.href) btn.classList.add("active");
-
-    // ✅ الاعتماد على activeHref بدل window.location.pathname
-    btn.onclick = () => {
-      if (activeHref !== item.href) {
-        window.location.href = item.href;
+      // صلاحية موسعة: أي شخص فيه (AUDITOR أو ADMIN أو MANAGER أو مدير/رئيس قسم/مدقق)
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")      ||
+          rolesTextRaw.includes("رئيس قسم")  ||
+          rolesTextRaw.includes("مدقق")
+        );
       }
-    };
 
-    container.appendChild(btn);
-  });
-}
+      // باقي الأكواد العادية: EMP, ADMIN, EVALUATOR...
+      return rolesTextUpper.includes(code);
+    }
 
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
+      ];
 
       links.forEach(item => {
         if (!hasRole(item.code)) return;
+
         const btn = document.createElement("button");
         btn.textContent = item.label;
+
+        // تمييز الزر الحالي
         if (activeHref === item.href) btn.classList.add("active");
+
+        // ✅ الاعتماد على activeHref بدل window.location.pathname
         btn.onclick = () => {
-          if (!window.location.pathname.endsWith(item.href)) {
+          if (activeHref !== item.href) {
             window.location.href = item.href;
           }
         };
+
         container.appendChild(btn);
       });
     }
