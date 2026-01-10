@@ -122,12 +122,28 @@
       window.location.href = "index.html";
     }
 
-    function hasRole(code) {
-      if (!user || !user.role) return false;
-      const rolesText = user.role.toString().toUpperCase();
-      return rolesText.includes(code);
-    }
- 
+function hasRole(code) {
+  if (!user || !user.role) return false;
+
+  const rolesTextUpper = user.role.toString().toUpperCase();
+  const rolesTextRaw   = user.role.toString();
+
+  // صلاحية موسعة: أي شخص فيه (AUDITOR أو ADMIN أو MANAGER أو مدير/رئيس قسم/مدقق)
+  if (code === "AUDITOR_EXTENDED") {
+    return (
+      rolesTextUpper.includes("AUDITOR") ||
+      rolesTextUpper.includes("ADMIN")   ||
+      rolesTextUpper.includes("MANAGER") ||
+      rolesTextRaw.includes("مدير")      ||
+      rolesTextRaw.includes("رئيس قسم")  ||
+      rolesTextRaw.includes("مدقق")
+    );
+  }
+
+  // باقي الأكواد العادية: EMP, ADMIN, EVALUATOR...
+  return rolesTextUpper.includes(code);
+}
+
     function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
