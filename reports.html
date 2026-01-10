@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>تقارير الجودة - المهام و البنود</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", system-ui, sans-serif;
+      background: #f4f7fb;
+      color: #111827;
+    }
+
+    header {
+      background: #0d6efd;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    header a {
+      color: #fff;
+    }
+
+    .nav-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nav-buttons button {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-family: "Cairo", system-ui, sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .nav-buttons button:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+    .nav-buttons button.active {
+      background: #fff;
+      color: #0d6efd;
+    }
+
+    main {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: flex-end;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+    .filters > div {
+      min-width: 130px;
+    }
+    .filters label {
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
+    .filters select,
+    .filters input {
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-family: inherit;
+      font-size: 0.8rem;
+      box-sizing: border-box;
+    }
+
+    .summary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .summary-box {
+      flex: 1;
+      min-width: 150px;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      border: 1px solid #e5e7eb;
+    }
+    .summary-title {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+    .summary-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .summary-sub {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th,
+    td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    th {
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr:nth-child(odd) {
+      background: #f9fafb;
+    }
+    tbody tr:hover {
+      background: #e5f2ff;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .status-correct {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-wrong {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .status-na {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .table-wrapper {
+      max-height: calc(100vh - 260px);
+      overflow: auto;
+    }
+
+    @media (max-width: 900px) {
+      .table-wrapper {
+        max-height: calc(100vh - 320px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>تقارير الجودة التفصيلية</h1>
+      <div>
+        <span id="userName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
+    </div>
+    <div class="nav-buttons" id="navButtons"></div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>فلاتر التقرير</h2>
+      <div class="filters">
+        <div>
+          <label>الشهر</label>
+          <select id="filterMonth" onchange="applyFiltersAndRender()"></select>
+        </div>
+        <div>
+          <label>الموظف</label>
+          <select id="filterEmployee" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>تصنيف المنتج</label>
+          <select id="filterCategory" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>حالة بند الجودة</label>
+          <select id="filterStatus" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+            <option value="correct">✅ صح</option>
+            <option value="wrong">❌ خطأ</option>
+            <option value="na">⭕ لا ينطبق</option>
+          </select>
+        </div>
+        <div style="flex:1; min-width: 160px;">
+          <label>بحث في نص بند الجودة</label>
+          <input
+            type="text"
+            id="filterRuleText"
+            placeholder="مثال: صورة، سعر، مواصفات..."
+            oninput="applyFiltersAndRender()"
+          />
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-box">
+          <div class="summary-title">عدد أسطر بنود الجودة (بعد الفلترة)</div>
+          <div class="summary-value" id="sumRows">0</div>
+          <div class="summary-sub">
+            كل سطر = بند جودة واحد مرتبط بمهمة واحدة.
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="summary-title">إجمالي النقاط المكتسبة / الممكنة</div>
+          <div class="summary-value" id="sumPoints">0 / 0 (0%)</div>
+          <div class="summary-sub">
+            حسب البنود التي حالتها ✅ صح فقط.
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="summary-title">توزيع الحالات</div>
+          <div class="summary-value" id="sumStatus">✅0 | ❌0 | ⭕0</div>
+          <div class="summary-sub">
+            عدد البنود الصحيحة/الخاطئة/لا ينطبق بعد الفلترة الحالية.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        جدول تفصيلي: الموظف × المهمة × تصنيف المنتج × بند الجودة
+      </h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#Task</th>
+              <th>الموظف</th>
+              <th>تاريخ المهمة</th>
+              <th>كود المنتج</th>
+              <th>تصنيف المنتج</th>
+              <th>بند الجودة</th>
+              <th>النقاط</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody">
+            <tr>
+              <td colspan="8">...جاري التحميل</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- إعدادات الـ API -->
+  <script src="config.js"></script>
+
+  <script>
+    const API_URL = window.API_URL;
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload }),
+      });
+      const txt = await res.text();
+      return JSON.parse(txt);
+    }
+
+    let user = null;
+    let allRows = []; // كل أسطر AuditDetails التي رجعت من السيرفر
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    // نفس منطق الأدوار الذي استعملناه في لوحة المدقق (تقدر تعدله حسب عمود Role)
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
+
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")     ||
+          rolesTextRaw.includes("رئيس قسم") ||
+          rolesTextRaw.includes("مدقق")
+        );
+      }
+
+      return rolesTextUpper.includes(code);
+    }
+
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",      href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",      href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",       href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",     href: "evaluator.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير الجودة",     href: "reports.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",      href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",     href: "ideas_admin.html" },
+      ];
+
+      links.forEach((item) => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
+            window.location.href = item.href;
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
+      const now = new Date();
+
+      sel.innerHTML = "";
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.appendChild(allOpt);
+
+      // آخر 12 شهر (بما فيهم الشهر الحالي)
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ("0" + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+
+      const currentKey =
+        now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
+      sel.value = currentKey;
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+
+      // صلاحية فتح تقارير الجودة: نفس صلاحيات المدقق الموسعة
+      if (!hasRole("AUDITOR_EXTENDED")) {
+        // لو ما عنده صلاحية، نرجعه على واجهة الموظف
+        window.location.href = "employee.html";
+        return;
+      }
+
+      document.getElementById("userName").textContent =
+        user.name + " (" + user.employeeCode + ")";
+
+      renderNav("reports.html");
+      initMonthFilter();
+      reloadReport();
+    }
+
+    async function reloadReport() {
+      const tbody = document.getElementById("reportBody");
+      tbody.innerHTML = "<tr><td colspan='8'>...جاري تحميل البيانات</td></tr>";
+
+      try {
+        // مبدئياً نطلب كل الأسطر بدون فلاتر من السيرفر
+        const res = await callApi("getQualityReport", {
+          filters: {}   // تقدر لاحقاً تستخدم monthKey هنا لو حاب تخفف البيانات
+        });
+
+        if (!res.success) {
+          tbody.innerHTML =
+            "<tr><td colspan='8'>خطأ في جلب البيانات من السيرفر</td></tr>";
+          return;
+        }
+
+        allRows = res.rows || [];
+
+        buildEmployeeFilterFromData();
+        buildCategoryFilterFromData();
+        applyFiltersAndRender();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+          "<tr><td colspan='8'>خطأ في الاتصال بالسيرفر</td></tr>";
+      }
+    }
+
+    function buildEmployeeFilterFromData() {
+      const sel = document.getElementById("filterEmployee");
+      const oldVal = sel.value;
+      const set = new Set();
+
+      allRows.forEach((r) => {
+        if (r.EmployeeCode) {
+          set.add(r.EmployeeName + "|" + r.EmployeeCode);
+        }
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((v) => {
+        const [name, code] = v.split("|");
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name + " (" + code + ")";
+        sel.appendChild(opt);
+      });
+
+      if ([...set].some((v) => v.split("|")[1] === oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function buildCategoryFilterFromData() {
+      const sel = document.getElementById("filterCategory");
+      const oldVal = sel.value;
+      const set = new Set();
+
+      allRows.forEach((r) => {
+        if (r.ProductCategory) set.add(r.ProductCategory);
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        sel.appendChild(opt);
+      });
+
+      if (set.has(oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function applyFiltersAndRender() {
+      const tbody = document.getElementById("reportBody");
+
+      if (!allRows.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='8'>لا توجد بيانات متاحة حالياً</td></tr>";
+        updateSummary([]);
+        return;
+      }
+
+      const monthKey = document.getElementById("filterMonth").value || "";
+      const empCode  = document.getElementById("filterEmployee").value || "";
+      const cat      = document.getElementById("filterCategory").value || "";
+      const status   = document.getElementById("filterStatus").value || "";
+      const ruleText = document
+        .getElementById("filterRuleText")
+        .value.toLowerCase()
+        .trim();
+
+      const filtered = allRows.filter((r) => {
+        // شهر
+        if (monthKey && String(r.MonthKey || "") !== monthKey) return false;
+
+        // موظف
+        if (empCode && String(r.EmployeeCode || "") !== empCode) return false;
+
+        // تصنيف
+        if (cat && String(r.ProductCategory || "") !== cat) return false;
+
+        // حالة بند الجودة
+        if (status && String(r.Status || "") !== status) return false;
+
+        // نص البند
+        if (ruleText) {
+          const t = (r.RuleDescription || "").toString().toLowerCase();
+          if (t.indexOf(ruleText) === -1) return false;
+        }
+
+        return true;
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='8'>لا توجد نتائج مطابقة للفلاتر الحالية</td></tr>";
+        updateSummary([]);
+        return;
+      }
+
+      tbody.innerHTML = "";
+
+      filtered.forEach((r) => {
+        const tr = document.createElement("tr");
+
+        const d = r.TaskDate
+          ? new Date(r.TaskDate).toLocaleString("ar-SY")
+          : "";
+
+        const statusClass =
+          r.Status === "correct"
+            ? "status-correct"
+            : r.Status === "wrong"
+            ? "status-wrong"
+            : "status-na";
+
+        const statusText =
+          r.Status === "correct"
+            ? "✅ صح"
+            : r.Status === "wrong"
+            ? "❌ خطأ"
+            : "⭕ لا ينطبق";
+
+        tr.innerHTML = `
+          <td>${r.TaskID || ""}</td>
+          <td>${r.EmployeeName || ""} <span class="badge">${r.EmployeeCode || ""}</span></td>
+          <td>${d}</td>
+          <td>${r.ProductCode || ""}</td>
+          <td>${r.ProductCategory || ""}</td>
+          <td style="text-align:right">${r.RuleDescription || ""}</td>
+          <td>${r.Points || 0}</td>
+          <td>
+            <span class="status-pill ${statusClass}">${statusText}</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateSummary(filtered);
+    }
+
+    function updateSummary(rows) {
+      const sumRowsEl   = document.getElementById("sumRows");
+      const sumPointsEl = document.getElementById("sumPoints");
+      const sumStatusEl = document.getElementById("sumStatus");
+
+      if (!rows || !rows.length) {
+        sumRowsEl.textContent   = "0";
+        sumPointsEl.textContent = "0 / 0 (0%)";
+        sumStatusEl.textContent = "✅0 | ❌0 | ⭕0";
+        return;
+      }
+
+      let totalRows       = rows.length;
+      let totalPossible   = 0;
+      let totalEarned     = 0;
+      let countCorrect    = 0;
+      let countWrong      = 0;
+      let countNA         = 0;
+
+      rows.forEach((r) => {
+        const pts = Number(r.Points || 0);
+        if (pts > 0) {
+          totalPossible += pts;
+          if (r.Status === "correct") {
+            totalEarned += pts;
+          }
+        }
+
+        if (r.Status === "correct") countCorrect++;
+        else if (r.Status === "wrong") countWrong++;
+        else countNA++;
+      });
+
+      const percent =
+        totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
+
+      sumRowsEl.textContent = totalRows.toString();
+      sumPointsEl.textContent =
+        totalEarned + " / " + totalPossible + " (" + percent + "%)";
+      sumStatusEl.textContent =
+        "✅" + countCorrect + " | ❌" + countWrong + " | ⭕" + countNA;
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
