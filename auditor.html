@@ -311,26 +311,42 @@
       window.location.href = "index.html";
     }
 
+    // ✅ نفس منطق الصلاحيات الموحّد
     function hasRole(code) {
       if (!user || !user.role) return false;
-      const rolesText = user.role.toString().toUpperCase();
-      return rolesText.includes(code);
+
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
+
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")      ||
+          rolesTextRaw.includes("رئيس قسم")  ||
+          rolesTextRaw.includes("مدقق")
+        );
+      }
+
+      return rolesTextUpper.includes(code);
     }
 
+    // ✅ شريط التنقل مع زر تقارير الجودة
     function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
 
-  const links = [
-    { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
-    { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
-    { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
-    { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
-    { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
-    { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-    { code: "AUDITOR_EXTENDED", label: "تقارير ",  href: "reports.html" }
-  ];
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير الجودة",  href: "reports.html" }
+      ];
 
       links.forEach((item) => {
         if (!hasRole(item.code)) return;
@@ -370,7 +386,7 @@
 
       const currentKey =
         now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
-      sel.value = currentKey; // مبدئياً نعرض شهر اليوم
+      sel.value = currentKey;
     }
 
     function loadUser() {
@@ -381,26 +397,27 @@
       }
       user = JSON.parse(str);
 
-      if (!hasRole("AUDITOR") && !hasRole("ADMIN")) {
+      // ✅ يسمح فقط للمدقق الموسّع بالدخول هنا
+      if (!hasRole("AUDITOR_EXTENDED")) {
         window.location.href = "employee.html";
         return;
       }
 
       document.getElementById("userName").textContent =
-        user.name + " (" + user.employeeCode + ")";
+        user.name + " (" + (user.employeeCode || user.role) + ")";
       renderNav("auditor.html");
       initMonthFilter();
       reloadTasks();
     }
 
-    // 🔹 هنا نطلب كل المهام من السيرفر (بدون فلتر شهر/موظف)
+    // 🔹 نطلب كل المهام من السيرفر
     async function reloadTasks() {
       const tbody = document.getElementById("tasksBody");
       tbody.innerHTML = "<tr><td colspan='9'>...جاري التحميل</td></tr>";
 
       try {
         const res = await callApi("getTasksForAudit", {
-          filters: {}   // لا نرسل monthKey ولا employeeCode
+          filters: {}
         });
 
         allTasks = res || [];
@@ -459,7 +476,6 @@
       }
     }
 
-    // ✅ الفلترة كاملة من جهة الواجهة (بما فيها الشهر)
     function applyFiltersAndRender() {
       const tbody = document.getElementById("tasksBody");
       if (!allTasks.length) {
@@ -477,7 +493,6 @@
       const empCode  = document.getElementById("filterEmployee").value || "";
 
       const filtered = allTasks.filter((t) => {
-        // 1) فلتر الشهر: نحسب YYYY-MM من TaskDate
         if (monthKey) {
           if (!t.TaskDate) return false;
           const dt = new Date(t.TaskDate);
@@ -487,16 +502,9 @@
           if (key !== monthKey) return false;
         }
 
-        // 2) الموظف
         if (empCode && String(t.EmployeeCode || "") !== empCode) return false;
-
-        // 3) حالة التدقيق
         if (status && String(t.AuditStatus || "") !== status) return false;
-
-        // 4) نوع المهمة
         if (type && String(t.TaskType || "") !== type) return false;
-
-        // 5) تصنيف المنتج
         if (cat && String(t.ProductCategory || "") !== cat) return false;
 
         return true;
@@ -582,7 +590,7 @@
           rulesHtml = rules
             .map((r, index) => {
               const id = "rule_" + index;
-              const status = r.Status || "na"; // correct / wrong / na
+              const status = r.Status || "na";
               const ruleId = (r.RuleID != null && r.RuleID !== '') ? r.RuleID : index;
 
               return `
@@ -708,7 +716,7 @@
 
       rows.forEach((row) => {
         const index = row.getAttribute("data-rule-index");
-        const ruleId = row.getAttribute("data-rule-id"); // RuleID القادم من السيرفر
+        const ruleId = row.getAttribute("data-rule-id");
         const descEl = row.querySelector(".rule-text");
         const ptsText = row.querySelector(".rule-points").textContent || "0";
         const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
