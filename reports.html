@@ -554,109 +554,121 @@
       }
     }
 
-    function applyFiltersAndRender() {
-      const tbody = document.getElementById("reportBody");
+ function applyFiltersAndRender() {
+  const tbody = document.getElementById("reportBody");
 
-      if (!allRows.length) {
-        tbody.innerHTML =
-          "<tr><td colspan='8'>لا توجد بيانات متاحة حالياً</td></tr>";
-        updateSummary([]);
-        return;
+  if (!allRows.length) {
+    tbody.innerHTML =
+      "<tr><td colspan='8'>لا توجد بيانات متاحة حالياً</td></tr>";
+    updateSummary([]);
+    return;
+  }
+
+  const monthKey = document.getElementById("filterMonth").value || "";
+  const empCode  = document.getElementById("filterEmployee").value || "";
+  const cat      = document.getElementById("filterCategory").value || "";
+  const ruleVal  = document.getElementById("filterRule").value || "";
+  const status   = document.getElementById("filterStatus").value || "";
+  const ruleText = document
+    .getElementById("filterRuleText")
+    .value.toLowerCase()
+    .trim();
+
+  const filtered = allRows.filter((r) => {
+    // 🗓 فلتر الشهر: نحاول أولاً MonthKey ثم TaskDate
+    if (monthKey) {
+      let rowMonthKey = "";
+
+      // 1) من MonthKey إن وجد
+      if (r.MonthKey) {
+        rowMonthKey = String(r.MonthKey);
+        // لو الشكل مثلاً "2026-01-15" نأخذ أول 7 محارف فقط
+        if (rowMonthKey.length >= 7) {
+          rowMonthKey = rowMonthKey.slice(0, 7);
+        }
       }
 
-      const monthKey = document.getElementById("filterMonth").value || "";
-      const empCode  = document.getElementById("filterEmployee").value || "";
-      const cat      = document.getElementById("filterCategory").value || "";
-      const ruleVal  = document.getElementById("filterRule").value || "";
-      const status   = document.getElementById("filterStatus").value || "";
-      const ruleText = document
-        .getElementById("filterRuleText")
-        .value.toLowerCase()
-        .trim();
-
-      const filtered = allRows.filter((r) => {
-        // 🗓 حساب شهر المهمة من TaskDate مباشرة
-        if (monthKey) {
-          let taskMonthKey = "";
-          if (r.TaskDate) {
-            const d = new Date(r.TaskDate);
-            if (!isNaN(d.getTime())) {
-              const y = d.getFullYear();
-              const m = ("0" + (d.getMonth() + 1)).slice(-2);
-              taskMonthKey = y + "-" + m;
-            }
-          }
-          if (taskMonthKey !== monthKey) return false;
+      // 2) لو ما حصلنا MonthKey نحسبه من TaskDate
+      if (!rowMonthKey && r.TaskDate) {
+        const d = new Date(r.TaskDate);
+        if (!isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const m = ("0" + (d.getMonth() + 1)).slice(-2);
+          rowMonthKey = y + "-" + m;
         }
-
-        // موظف
-        if (empCode && String(r.EmployeeCode || "") !== empCode) return false;
-
-        // تصنيف
-        if (cat && String(r.ProductCategory || "") !== cat) return false;
-
-        // بند جودة محدد من القائمة
-        if (ruleVal && String(r.RuleDescription || "") !== ruleVal) return false;
-
-        // حالة بند الجودة
-        if (status && String(r.Status || "") !== status) return false;
-
-        // بحث نصي داخل بند الجودة
-        if (ruleText) {
-          const t = (r.RuleDescription || "").toString().toLowerCase();
-          if (t.indexOf(ruleText) === -1) return false;
-        }
-
-        return true;
-      });
-
-      if (!filtered.length) {
-        tbody.innerHTML =
-          "<tr><td colspan='8'>لا توجد نتائج مطابقة للفلاتر الحالية</td></tr>";
-        updateSummary([]);
-        return;
       }
 
-      tbody.innerHTML = "";
-
-      filtered.forEach((r) => {
-        const tr = document.createElement("tr");
-
-        const d = r.TaskDate
-          ? new Date(r.TaskDate).toLocaleString("ar-SY")
-          : "";
-
-        const statusClass =
-          r.Status === "correct"
-            ? "status-correct"
-            : r.Status === "wrong"
-            ? "status-wrong"
-            : "status-na";
-
-        const statusText =
-          r.Status === "correct"
-            ? "✅ صح"
-            : r.Status === "wrong"
-            ? "❌ خطأ"
-            : "⭕ لا ينطبق";
-
-        tr.innerHTML = `
-          <td>${r.TaskID || ""}</td>
-          <td>${r.EmployeeName || ""} <span class="badge">${r.EmployeeCode || ""}</span></td>
-          <td>${d}</td>
-          <td>${r.ProductCode || ""}</td>
-          <td>${r.ProductCategory || ""}</td>
-          <td style="text-align:right">${r.RuleDescription || ""}</td>
-          <td>${r.Points || 0}</td>
-          <td>
-            <span class="status-pill ${statusClass}">${statusText}</span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      updateSummary(filtered);
+      if (rowMonthKey !== monthKey) return false;
     }
+
+    // موظف
+    if (empCode && String(r.EmployeeCode || "") !== empCode) return false;
+
+    // تصنيف المنتج
+    if (cat && String(r.ProductCategory || "") !== cat) return false;
+
+    // بند جودة محدد من القائمة
+    if (ruleVal && String(r.RuleDescription || "") !== ruleVal) return false;
+
+    // حالة بند الجودة
+    if (status && String(r.Status || "") !== status) return false;
+
+    // بحث نصي داخل بند الجودة
+    if (ruleText) {
+      const t = (r.RuleDescription || "").toString().toLowerCase();
+      if (t.indexOf(ruleText) === -1) return false;
+    }
+
+    return true;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML =
+      "<tr><td colspan='8'>لا توجد نتائج مطابقة للفلاتر الحالية</td></tr>";
+    updateSummary([]);
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  filtered.forEach((r) => {
+    const tr = document.createElement("tr");
+
+    const d = r.TaskDate
+      ? new Date(r.TaskDate).toLocaleString("ar-SY")
+      : "";
+
+    const statusClass =
+      r.Status === "correct"
+        ? "status-correct"
+        : r.Status === "wrong"
+        ? "status-wrong"
+        : "status-na";
+
+    const statusText =
+      r.Status === "correct"
+        ? "✅ صح"
+        : r.Status === "wrong"
+        ? "❌ خطأ"
+        : "⭕ لا ينطبق";
+
+    tr.innerHTML = `
+      <td>${r.TaskID || ""}</td>
+      <td>${r.EmployeeName || ""} <span class="badge">${r.EmployeeCode || ""}</span></td>
+      <td>${d}</td>
+      <td>${r.ProductCode || ""}</td>
+      <td>${r.ProductCategory || ""}</td>
+      <td style="text-align:right">${r.RuleDescription || ""}</td>
+      <td>${r.Points || 0}</td>
+      <td>
+        <span class="status-pill ${statusClass}">${statusText}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateSummary(filtered);
+}
 
     function updateSummary(rows) {
       const sumRowsEl      = document.getElementById("sumRows");
