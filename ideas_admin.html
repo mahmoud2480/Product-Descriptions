@@ -209,10 +209,10 @@ function hasRole(code) {
 }
 
 
-    function renderNav(activeHref) {
-      const container = document.getElementById("navButtons");
-      if (!container) return;
-      container.innerHTML = "";
+function renderNav(activeHref) {
+  const container = document.getElementById("navButtons");
+  if (!container) return;
+  container.innerHTML = "";
 
   const links = [
     { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
@@ -221,8 +221,28 @@ function hasRole(code) {
     { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
     { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
     { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-    { code: "AUDITOR_EXTENDED", label: "تقارير ",  href: "reports.html" }
+    { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
   ];
+
+  links.forEach(item => {
+    if (!hasRole(item.code)) return;
+
+    const btn = document.createElement("button");
+    btn.textContent = item.label;
+
+    // تمييز الزر الحالي
+    if (activeHref === item.href) btn.classList.add("active");
+
+    // ✅ الاعتماد على activeHref بدل window.location.pathname
+    btn.onclick = () => {
+      if (activeHref !== item.href) {
+        window.location.href = item.href;
+      }
+    };
+
+    container.appendChild(btn);
+  });
+}
 
 
       links.forEach(item => {
