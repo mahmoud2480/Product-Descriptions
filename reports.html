@@ -228,6 +228,13 @@
             <option value="">الكل</option>
           </select>
         </div>
+        <!-- ✅ فلتر بند الجودة -->
+        <div>
+          <label>بند الجودة</label>
+          <select id="filterRule" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+          </select>
+        </div>
         <div>
           <label>حالة بند الجودة</label>
           <select id="filterStatus" onchange="applyFiltersAndRender()">
@@ -262,6 +269,24 @@
           <div class="summary-value" id="sumPoints">0 / 0 (0%)</div>
           <div class="summary-sub">
             حسب البنود التي حالتها ✅ صح فقط.
+          </div>
+        </div>
+
+        <!-- ✅ عدد المنتجات المختلفة في الفترة -->
+        <div class="summary-box">
+          <div class="summary-title">عدد المنتجات (أكواد مختلفة)</div>
+          <div class="summary-value" id="sumProducts">0</div>
+          <div class="summary-sub">
+            يتم حساب المنتجات المميزة حسب كود المنتج ضمن الفلاتر الحالية.
+          </div>
+        </div>
+
+        <!-- ✅ عدد التصنيفات المختلفة في الفترة -->
+        <div class="summary-box">
+          <div class="summary-title">عدد تصنيفات المنتجات</div>
+          <div class="summary-value" id="sumCategories">0</div>
+          <div class="summary-sub">
+            عدد تصنيفات المنتجات المختلفة ضمن الفلاتر الحالية.
           </div>
         </div>
 
@@ -327,43 +352,40 @@
       window.location.href = "index.html";
     }
 
-function hasRole(code) {
-  if (!user || !user.role) return false;
+    function hasRole(code) {
+      if (!user || !user.role) return false;
 
-  const rolesTextUpper = user.role.toString().toUpperCase();
-  const rolesTextRaw   = user.role.toString();
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
 
-  if (code === "AUDITOR_EXTENDED") {
-    return (
-      rolesTextUpper.includes("AUDITOR") ||
-      rolesTextUpper.includes("ADMIN")   ||
-      rolesTextUpper.includes("MANAGER") ||
-      rolesTextRaw.includes("مدير")     ||
-      rolesTextRaw.includes("رئيس قسم") ||
-      rolesTextRaw.includes("مدقق")
-    );
-  }
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")     ||
+          rolesTextRaw.includes("رئيس قسم") ||
+          rolesTextRaw.includes("مدقق")
+        );
+      }
 
-  return rolesTextUpper.includes(code);
-}
-
+      return rolesTextUpper.includes(code);
+    }
 
     function renderNav(activeHref) {
       const container = document.getElementById("navButtons");
       if (!container) return;
       container.innerHTML = "";
 
-  const links = [
-    { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
-    { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
-    { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
-    { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
-    { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
-    { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-    { code: "AUDITOR_EXTENDED", label: "تقارير ",  href: "reports.html" }
-  ];
-
-
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
+      ];
 
       links.forEach((item) => {
         if (!hasRole(item.code)) return;
@@ -416,7 +438,6 @@ function hasRole(code) {
 
       // صلاحية فتح تقارير الجودة: نفس صلاحيات المدقق الموسعة
       if (!hasRole("AUDITOR_EXTENDED")) {
-        // لو ما عنده صلاحية، نرجعه على واجهة الموظف
         window.location.href = "employee.html";
         return;
       }
@@ -436,7 +457,7 @@ function hasRole(code) {
       try {
         // مبدئياً نطلب كل الأسطر بدون فلاتر من السيرفر
         const res = await callApi("getQualityReport", {
-          filters: {}   // تقدر لاحقاً تستخدم monthKey هنا لو حاب تخفف البيانات
+          filters: {}
         });
 
         if (!res.success) {
@@ -449,6 +470,7 @@ function hasRole(code) {
 
         buildEmployeeFilterFromData();
         buildCategoryFilterFromData();
+        buildRuleFilterFromData();   // ✅ تعبئة فلتر بند الجودة
         applyFiltersAndRender();
       } catch (err) {
         console.error(err);
@@ -503,57 +525,90 @@ function hasRole(code) {
         sel.value = oldVal;
       }
     }
-function applyFiltersAndRender() {
-  const tbody = document.getElementById("reportBody");
 
-  if (!allRows.length) {
-    tbody.innerHTML =
-      "<tr><td colspan='8'>لا توجد بيانات متاحة حالياً</td></tr>";
-    updateSummary([]);
-    return;
-  }
+    // ✅ فلتر بند الجودة (قائمة منسدلة)
+    function buildRuleFilterFromData() {
+      const sel = document.getElementById("filterRule");
+      const oldVal = sel.value;
+      const set = new Set();
 
-  const monthKey = document.getElementById("filterMonth").value || "";
-  const empCode  = document.getElementById("filterEmployee").value || "";
-  const cat      = document.getElementById("filterCategory").value || "";
-  const status   = document.getElementById("filterStatus").value || "";
-  const ruleText = document
-    .getElementById("filterRuleText")
-    .value.toLowerCase()
-    .trim();
-
-  const filtered = allRows.filter((r) => {
-    // 🗓 حساب شهر المهمة من TaskDate مباشرة
-    if (monthKey) {
-      let taskMonthKey = "";
-      if (r.TaskDate) {
-        const d = new Date(r.TaskDate);
-        if (!isNaN(d.getTime())) {
-          const y = d.getFullYear();
-          const m = ("0" + (d.getMonth() + 1)).slice(-2);
-          taskMonthKey = y + "-" + m;
+      allRows.forEach((r) => {
+        if (r.RuleDescription) {
+          set.add(r.RuleDescription.toString());
         }
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((ruleText) => {
+        const opt = document.createElement("option");
+        opt.value = ruleText;
+        // نختصر قليلاً في العرض لو الجملة طويلة
+        const display =
+          ruleText.length > 70 ? ruleText.slice(0, 70) + "..." : ruleText;
+        opt.textContent = display;
+        sel.appendChild(opt);
+      });
+
+      if (set.has(oldVal)) {
+        sel.value = oldVal;
       }
-      if (taskMonthKey !== monthKey) return false;
     }
 
-    // موظف
-    if (empCode && String(r.EmployeeCode || "") !== empCode) return false;
+    function applyFiltersAndRender() {
+      const tbody = document.getElementById("reportBody");
 
-    // تصنيف
-    if (cat && String(r.ProductCategory || "") !== cat) return false;
+      if (!allRows.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='8'>لا توجد بيانات متاحة حالياً</td></tr>";
+        updateSummary([]);
+        return;
+      }
 
-    // حالة بند الجودة
-    if (status && String(r.Status || "") !== status) return false;
+      const monthKey = document.getElementById("filterMonth").value || "";
+      const empCode  = document.getElementById("filterEmployee").value || "";
+      const cat      = document.getElementById("filterCategory").value || "";
+      const ruleVal  = document.getElementById("filterRule").value || "";
+      const status   = document.getElementById("filterStatus").value || "";
+      const ruleText = document
+        .getElementById("filterRuleText")
+        .value.toLowerCase()
+        .trim();
 
-    // نص البند
-    if (ruleText) {
-      const t = (r.RuleDescription || "").toString().toLowerCase();
-      if (t.indexOf(ruleText) === -1) return false;
-    }
+      const filtered = allRows.filter((r) => {
+        // 🗓 حساب شهر المهمة من TaskDate مباشرة
+        if (monthKey) {
+          let taskMonthKey = "";
+          if (r.TaskDate) {
+            const d = new Date(r.TaskDate);
+            if (!isNaN(d.getTime())) {
+              const y = d.getFullYear();
+              const m = ("0" + (d.getMonth() + 1)).slice(-2);
+              taskMonthKey = y + "-" + m;
+            }
+          }
+          if (taskMonthKey !== monthKey) return false;
+        }
 
-    return true;
-  });
+        // موظف
+        if (empCode && String(r.EmployeeCode || "") !== empCode) return false;
+
+        // تصنيف
+        if (cat && String(r.ProductCategory || "") !== cat) return false;
+
+        // بند جودة محدد من القائمة
+        if (ruleVal && String(r.RuleDescription || "") !== ruleVal) return false;
+
+        // حالة بند الجودة
+        if (status && String(r.Status || "") !== status) return false;
+
+        // بحث نصي داخل بند الجودة
+        if (ruleText) {
+          const t = (r.RuleDescription || "").toString().toLowerCase();
+          if (t.indexOf(ruleText) === -1) return false;
+        }
+
+        return true;
+      });
 
       if (!filtered.length) {
         tbody.innerHTML =
@@ -604,14 +659,18 @@ function applyFiltersAndRender() {
     }
 
     function updateSummary(rows) {
-      const sumRowsEl   = document.getElementById("sumRows");
-      const sumPointsEl = document.getElementById("sumPoints");
-      const sumStatusEl = document.getElementById("sumStatus");
+      const sumRowsEl      = document.getElementById("sumRows");
+      const sumPointsEl    = document.getElementById("sumPoints");
+      const sumStatusEl    = document.getElementById("sumStatus");
+      const sumProductsEl  = document.getElementById("sumProducts");
+      const sumCategoriesEl= document.getElementById("sumCategories");
 
       if (!rows || !rows.length) {
-        sumRowsEl.textContent   = "0";
-        sumPointsEl.textContent = "0 / 0 (0%)";
-        sumStatusEl.textContent = "✅0 | ❌0 | ⭕0";
+        sumRowsEl.textContent       = "0";
+        sumPointsEl.textContent     = "0 / 0 (0%)";
+        sumStatusEl.textContent     = "✅0 | ❌0 | ⭕0";
+        if (sumProductsEl)   sumProductsEl.textContent   = "0";
+        if (sumCategoriesEl) sumCategoriesEl.textContent = "0";
         return;
       }
 
@@ -621,6 +680,9 @@ function applyFiltersAndRender() {
       let countCorrect    = 0;
       let countWrong      = 0;
       let countNA         = 0;
+
+      const productSet   = new Set();
+      const categorySet  = new Set();
 
       rows.forEach((r) => {
         const pts = Number(r.Points || 0);
@@ -634,6 +696,9 @@ function applyFiltersAndRender() {
         if (r.Status === "correct") countCorrect++;
         else if (r.Status === "wrong") countWrong++;
         else countNA++;
+
+        if (r.ProductCode)     productSet.add(String(r.ProductCode));
+        if (r.ProductCategory) categorySet.add(String(r.ProductCategory));
       });
 
       const percent =
@@ -644,6 +709,13 @@ function applyFiltersAndRender() {
         totalEarned + " / " + totalPossible + " (" + percent + "%)";
       sumStatusEl.textContent =
         "✅" + countCorrect + " | ❌" + countWrong + " | ⭕" + countNA;
+
+      if (sumProductsEl) {
+        sumProductsEl.textContent = productSet.size.toString();
+      }
+      if (sumCategoriesEl) {
+        sumCategoriesEl.textContent = categorySet.size.toString();
+      }
     }
 
     document.addEventListener("DOMContentLoaded", loadUser);
