@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>الاختبار الشهري للموظفين</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", system-ui, sans-serif;
+      background: #f4f7fb;
+      color: #111827;
+    }
+
+    header {
+      background: #0d6efd;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    header a {
+      color: #fff;
+    }
+
+    .nav-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nav-buttons button {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-family: "Cairo", system-ui, sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .nav-buttons button:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+    .nav-buttons button.active {
+      background: #fff;
+      color: #0d6efd;
+    }
+
+    main {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1.1fr 1.4fr;
+      gap: 10px;
+    }
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+    select, input, textarea {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-family: inherit;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .inline-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .inline-row > div {
+      flex: 1;
+      min-width: 130px;
+    }
+
+    button.primary {
+      margin-top: 10px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #0d6efd;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button.secondary {
+      margin-top: 10px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid #9ca3af;
+      background: #f3f4f6;
+      color: #111827;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .msg {
+      margin-top: 6px;
+      font-size: 0.8rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    th {
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr:nth-child(odd) {
+      background: #f9fafb;
+    }
+    tbody tr:hover {
+      background: #e5f2ff;
+      cursor: pointer;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .table-wrapper {
+      max-height: calc(100vh - 210px);
+      overflow: auto;
+    }
+
+    .summary {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>لوحة الاختبار الشهري للموظفين</h1>
+      <div>
+        <span id="userName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
+    </div>
+    <div class="nav-buttons" id="navButtons"></div>
+  </header>
+
+  <main>
+    <!-- لوحة الإدخال / التعديل -->
+    <div class="card">
+      <h2>إدخال / تعديل نتيجة الاختبار الشهري</h2>
+
+      <div class="inline-row">
+        <div>
+          <label>الشهر</label>
+          <select id="monthSelect" onchange="reloadTests()"></select>
+        </div>
+        <div>
+          <label>الموظف</label>
+          <select id="employeeSelect"></select>
+        </div>
+      </div>
+
+      <div class="inline-row">
+        <div>
+          <label>الدرجة (من 10)</label>
+          <input type="number" id="testScore" min="0" max="10" step="0.5" />
+        </div>
+        <div>
+          <label>كود الموظف</label>
+          <input type="text" id="empCodeDisplay" readonly />
+        </div>
+      </div>
+
+      <label>ملاحظات على الاختبار</label>
+      <textarea id="testNotes" placeholder="مثال: ممتاز، يحتاج تحسين في جزء الصور، ..."></textarea>
+
+      <div class="inline-row">
+        <button class="primary" onclick="saveTest()">حفظ / تحديث النتيجة</button>
+        <button class="secondary" onclick="clearForm()">تفريغ الحقول</button>
+      </div>
+
+      <div class="summary" id="formInfo">
+        اختر شهرًا وموظفًا، ثم أدخل الدرجة من 10 واضغط "حفظ".
+      </div>
+      <div class="msg" id="formMsg"></div>
+    </div>
+
+    <!-- جدول النتائج -->
+    <div class="card">
+      <h2>نتائج الاختبار الشهري (حسب الشهر المختار)</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الموظف</th>
+              <th>الدرجة (من 10)</th>
+              <th>ملاحظات</th>
+              <th>آخر تعديل</th>
+            </tr>
+          </thead>
+          <tbody id="testsBody">
+            <tr><td colspan="5">...جاري التحميل</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="summary" id="testsSummary"></div>
+    </div>
+  </main>
+
+  <!-- إعدادات API -->
+  <script src="config.js"></script>
+
+  <script>
+    const API_URL = window.API_URL;
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+      const txt = await res.text();
+      try {
+        return JSON.parse(txt);
+      } catch (e) {
+        console.error("API raw:", txt);
+        throw e;
+      }
+    }
+
+    let user = null;
+    let employees = [];     // [{EmployeeCode, EmployeeName, Department, ...}]
+    let tests = [];         // [{MonthKey, EmployeeCode, EmployeeName, Score, Notes, UpdatedAt}]
+    let currentSelectedEmp = null;
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
+
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")     ||
+          rolesTextRaw.includes("رئيس قسم") ||
+          rolesTextRaw.includes("مدقق")
+        );
+      }
+
+      return rolesTextUpper.includes(code);
+    }
+
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير ",        href: "reports.html" }
+      ];
+
+      links.forEach(item => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
+            window.location.href = item.href;
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function initMonthSelect() {
+      const sel = document.getElementById("monthSelect");
+      const now = new Date();
+      sel.innerHTML = "";
+
+      // آخر 12 شهر
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ("0" + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+    }
+
+    async function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+
+      // صلاحية الاختبار الشهري: نفس صلاحيات EVALUATOR و/أو ADMIN
+      if (!hasRole("EVALUATOR") && !hasRole("ADMIN")) {
+        // لو ما عنده صلاحية يدخل، يرجع لواجهة الموظف
+        window.location.href = "employee.html";
+        return;
+      }
+
+      document.getElementById("userName").textContent =
+        user.name + " (" + user.employeeCode + ")";
+
+      renderNav("tests.html");
+      initMonthSelect();
+      await loadEmployees();
+      await reloadTests();
+    }
+
+    async function loadEmployees() {
+      try {
+        // ✨ يفترض أن السكربت يرجع { success:true, employees:[...] }
+        const res = await callApi("listEmployees", {});
+        if (res && res.success && Array.isArray(res.employees)) {
+          employees = res.employees;
+        } else if (Array.isArray(res)) {
+          // في حال رجع مباشرة مصفوفة بدون success
+          employees = res;
+        } else {
+          employees = [];
+        }
+
+        const sel = document.getElementById("employeeSelect");
+        sel.innerHTML = "";
+        if (!employees.length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "لا توجد بيانات موظفين";
+          sel.appendChild(opt);
+          return;
+        }
+
+        employees.forEach(emp => {
+          const opt = document.createElement("option");
+          opt.value = emp.EmployeeCode || emp.employeeCode || "";
+          opt.textContent =
+            (emp.EmployeeName || emp.name || "بدون اسم") +
+            " (" + (emp.EmployeeCode || emp.employeeCode || "") + ")";
+          sel.appendChild(opt);
+        });
+
+        // أول موظف افتراضيًا
+        currentSelectedEmp = sel.value;
+        updateEmpCodeDisplay();
+        sel.onchange = () => {
+          currentSelectedEmp = sel.value;
+          updateEmpCodeDisplay();
+          // لما نغيّر الموظف، لو له نتيجة في هذا الشهر نعبّيها
+          fillFormFromExisting();
+        };
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateEmpCodeDisplay() {
+      const codeInput = document.getElementById("empCodeDisplay");
+      const code = document.getElementById("employeeSelect").value || "";
+      codeInput.value = code;
+    }
+
+    async function reloadTests() {
+      const monthKey = document.getElementById("monthSelect").value;
+      const tbody = document.getElementById("testsBody");
+      tbody.innerHTML = "<tr><td colspan='5'>...جاري التحميل</td></tr>";
+      document.getElementById("testsSummary").textContent = "";
+
+      try {
+        // ✨ يفترض أن السكربت يرجع { success:true, rows:[...] }
+        const res = await callApi("getMonthlyTests", { monthKey });
+        if (res && res.success && Array.isArray(res.rows)) {
+          tests = res.rows;
+        } else if (Array.isArray(res)) {
+          tests = res;
+        } else {
+          tests = [];
+        }
+
+        renderTestsTable();
+        // بعد تحميل النتائج نحدّث الفورم حسب الموظف المختار
+        fillFormFromExisting();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+          "<tr><td colspan='5'>خطأ في تحميل بيانات الاختبار الشهري</td></tr>";
+      }
+    }
+
+    function renderTestsTable() {
+      const tbody = document.getElementById("testsBody");
+      if (!tests.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='5'>لا توجد نتائج للاختبار في هذا الشهر</td></tr>";
+        document.getElementById("testsSummary").textContent = "";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      tests.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+
+        const d = row.UpdatedAt
+          ? new Date(row.UpdatedAt).toLocaleString("ar-SY")
+          : "";
+
+        const name =
+          row.EmployeeName || row.employeeName || "بدون اسم";
+        const code =
+          row.EmployeeCode || row.employeeCode || "";
+
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${name} <span class="badge">${code}</span></td>
+          <td>${row.Score != null ? row.Score : ""}</td>
+          <td style="text-align:right">${row.Notes || ""}</td>
+          <td>${d}</td>
+        `;
+
+        // عند الضغط على السطر نحمّل البيانات في الفورم
+        tr.onclick = () => {
+          selectEmployeeFromRow(code);
+          document.getElementById("testScore").value =
+            row.Score != null ? row.Score : "";
+          document.getElementById("testNotes").value = row.Notes || "";
+          const msg = document.getElementById("formInfo");
+          msg.textContent =
+            "يتم الآن تعديل نتيجة الموظف: " +
+            name +
+            " للشهر " +
+            document.getElementById("monthSelect").value;
+        };
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("testsSummary").textContent =
+        "عدد الموظفين الذين لديهم نتيجة في هذا الشهر: " + tests.length;
+    }
+
+    function selectEmployeeFromRow(empCode) {
+      const sel = document.getElementById("employeeSelect");
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === empCode) {
+          sel.selectedIndex = i;
+          break;
+        }
+      }
+      currentSelectedEmp = empCode;
+      updateEmpCodeDisplay();
+    }
+
+    function fillFormFromExisting() {
+      const monthKey = document.getElementById("monthSelect").value;
+      const empCode = document.getElementById("employeeSelect").value || "";
+      if (!monthKey || !empCode || !tests.length) {
+        document.getElementById("testScore").value = "";
+        document.getElementById("testNotes").value = "";
+        document.getElementById("formInfo").textContent =
+          "اختر شهرًا وموظفًا، ثم أدخل الدرجة من 10 واضغط \"حفظ\".";
+        return;
+      }
+
+      const row = tests.find(
+        r =>
+          String(r.EmployeeCode || r.employeeCode || "") === empCode
+      );
+
+      if (row) {
+        document.getElementById("testScore").value =
+          row.Score != null ? row.Score : "";
+        document.getElementById("testNotes").value = row.Notes || "";
+        document.getElementById("formInfo").textContent =
+          "تعديل نتيجة موجودة مسبقًا لهذا الموظف في هذا الشهر.";
+      } else {
+        document.getElementById("testScore").value = "";
+        document.getElementById("testNotes").value = "";
+        document.getElementById("formInfo").textContent =
+          "لا توجد نتيجة سابقة لهذا الموظف في هذا الشهر. سيتم إنشاء سجل جديد.";
+      }
+    }
+
+    function clearForm() {
+      document.getElementById("testScore").value = "";
+      document.getElementById("testNotes").value = "";
+      document.getElementById("formMsg").textContent = "";
+      document.getElementById("formInfo").textContent =
+        "اختر شهرًا وموظفًا، ثم أدخل الدرجة من 10 واضغط \"حفظ\".";
+    }
+
+    async function saveTest() {
+      const msg = document.getElementById("formMsg");
+      msg.style.color = "#374151";
+      msg.textContent = "...جاري الحفظ";
+
+      const monthKey = document.getElementById("monthSelect").value;
+      const empCode  = document.getElementById("employeeSelect").value || "";
+      const scoreRaw = document.getElementById("testScore").value;
+      const notes    = document.getElementById("testNotes").value || "";
+
+      if (!monthKey || !empCode) {
+        msg.style.color = "#b91c1c";
+        msg.textContent = "يرجى اختيار الشهر والموظف أولاً.";
+        return;
+      }
+
+      const score = Number(scoreRaw);
+      if (isNaN(score) || score < 0 || score > 10) {
+        msg.style.color = "#b91c1c";
+        msg.textContent = "الرجاء إدخال درجة صحيحة بين 0 و 10.";
+        return;
+      }
+
+      try {
+        const res = await callApi("saveMonthlyTest", {
+          monthKey,
+          employeeCode: empCode,
+          score,
+          notes
+        });
+
+        if (res && res.success) {
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم حفظ نتيجة الاختبار بنجاح.";
+          await reloadTests();
+        } else {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل حفظ النتيجة.";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
