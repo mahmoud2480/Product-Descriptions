@@ -181,14 +181,12 @@
       text-decoration: underline;
       font-size: 0.75rem;
     }
-    /* ✅ شكل النص بعد تنفيذ الملاحظات */
     .followup-done {
       color: #16a34a;
       font-size: 0.75rem;
       font-weight: 600;
     }
 
-    /* تمييز النتيجة المطبقة */
     .best-match {
       border: 1px solid #e11d48;
       background: #fee2e2;
@@ -362,68 +360,51 @@
       return rolesTextUpper.includes(code);
     }
 
-function renderNav(activeHref) {
-  const container = document.getElementById("navButtons");
-  if (!container) return;
-  container.innerHTML = "";
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
 
-  const leaveUrl =
-    "https://mahmoud2480.github.io/gstore-hr-leave/?" +
-    "empCode=" + encodeURIComponent(user.employeeCode || "") +
-    "&name="  + encodeURIComponent(user.name || "") +
-    "&role="  + encodeURIComponent(user.role || "");
+      const leaveUrl =
+        "https://mahmoud2480.github.io/gstore-hr-leave/?" +
+        "empCode=" + encodeURIComponent(user.employeeCode || "") +
+        "&name="  + encodeURIComponent(user.name || "") +
+        "&role="  + encodeURIComponent(user.role || "");
 
-  const links = [
-    { code: "EMP",              label: "واجهة الموظف",    href: "employee.html" },
-    { code: "EMP",              label: "أفكار الموظف",    href: "ideas.html" },
-    { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",     href: "auditor.html" },
-    { code: "EVALUATOR",        label: "واجهة التقييم",   href: "evaluator.html" },
-    { code: "ADMIN",            label: "لوحة الإدارة",    href: "admin.html" },
-    { code: "ADMIN",            label: "إدارة الأفكار",   href: "ideas_admin.html" },
-    { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
-    { code: "AUDITOR_EXTENDED", label: "تقارير",          href: "reports.html" },
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",    href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",    href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",     href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",   href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",    href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",   href: "ideas_admin.html" },
+        { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير",          href: "reports.html" },
 
-    // ⭐ زر نظام طلبات الإجازات (يفتح في تبويب جديد مع تمرير بيانات الموظف)
-    { code: "EMP", label: "طلبات الإجازات", href: leaveUrl, external: true }
-  ];
-
-  links.forEach(item => {
-    if (!hasRole(item.code)) return;
-
-    const btn = document.createElement("button");
-    btn.textContent = item.label;
-
-    if (!item.external && activeHref === item.href) {
-      btn.classList.add("active");
-    }
-
-    if (item.external) {
-      // رابط خارجي → افتح في تبويب جديد
-      btn.onclick = () => window.open(item.href, "_blank");
-    } else {
-      // روابط الواجهات الداخلية
-      btn.onclick = () => {
-        if (!window.location.pathname.endsWith(item.href)) {
-          window.location.href = item.href;
-        }
-      };
-    }
-
-    container.appendChild(btn);
-  });
-}
-
+        // ⭐ زر نظام طلبات الإجازات (يفتح في تبويب جديد مع تمرير بيانات الموظف)
+        { code: "EMP", label: "طلبات الإجازات", href: leaveUrl, external: true }
+      ];
 
       links.forEach(item => {
         if (!hasRole(item.code)) return;
+
         const btn = document.createElement("button");
         btn.textContent = item.label;
-        if (activeHref === item.href) btn.classList.add("active");
-        btn.onclick = () => {
-          if (!window.location.pathname.endsWith(item.href)) {
-            window.location.href = item.href;
-          }
-        };
+
+        if (!item.external && activeHref === item.href) {
+          btn.classList.add("active");
+        }
+
+        if (item.external) {
+          btn.onclick = () => window.open(item.href, "_blank");
+        } else {
+          btn.onclick = () => {
+            if (!window.location.pathname.endsWith(item.href)) {
+              window.location.href = item.href;
+            }
+          };
+        }
+
         container.appendChild(btn);
       });
     }
@@ -491,7 +472,7 @@ function renderNav(activeHref) {
       const assignedText = document.getElementById("assignedText").value;
       const assignedLink = document.getElementById("assignedLink").value;
       const taskDate = document.getElementById("taskDate").value;
-      const employeeNotes = document.getElementById("employeeNotes").value; // ✅ جديد
+      const employeeNotes = document.getElementById("employeeNotes").value;
 
       if (!taskType) {
         msg.textContent = "يرجى اختيار نوع المهمة";
@@ -513,7 +494,7 @@ function renderNav(activeHref) {
         branchCount,
         assignedText,
         assignedLink,
-        employeeNotes,          // ✅ يخزن ملاحظات الموظف في المهمة الحالية
+        employeeNotes,
         seconds: 0,
         running: true,
         status: "running"
@@ -526,7 +507,7 @@ function renderNav(activeHref) {
       document.getElementById("branchCount").value = "";
       document.getElementById("assignedText").value = "";
       document.getElementById("assignedLink").value = "";
-      // ملاحظات الموظف نتركها بدون مسح حتى يمكن استخدامها لعدة مهام إن أحببتم
+      // ملاحظات الموظف نتركها كما هي
 
       msg.textContent = "تمت إضافة المهمة إلى قائمة المهام الحالية وبدأ العداد تلقائياً.";
     }
@@ -626,7 +607,7 @@ function renderNav(activeHref) {
         assignedText: t.assignedText,
         assignedLink: t.assignedLink,
         durationMinutes: minutes,
-        employeeNotes: t.employeeNotes || ""   // ✅ إرسال ملاحظات الموظف للـ API
+        employeeNotes: t.employeeNotes || ""
       };
 
       try {
@@ -663,7 +644,6 @@ function renderNav(activeHref) {
           return;
         }
 
-        // ترتيب من الأحدث إلى الأقدم (نعتمد CreatedAt ثم TaskDate ثم TaskID)
         list.sort((a, b) => {
           const dA = a.CreatedAt
             ? new Date(a.CreatedAt)
@@ -691,7 +671,6 @@ function renderNav(activeHref) {
             ? `${qEarned}/${qPossible}`
             : (qEarned ? String(qEarned) : "");
 
-          // شكل خانة "تنفيذ الملاحظات"
           let followUpCell = "";
           if (t.EmployeeFollowUp === "YES") {
             followUpCell = `<span class="followup-done">تم التنفيذ</span>`;
@@ -735,15 +714,14 @@ function renderNav(activeHref) {
       return ts;
     }
 
-    // دالة بسيطة لتوحيد الكود في الواجهة (لأجل التلوين فقط)
     function normalizeCodeFront(str) {
       if (!str) return "";
       return str
         .toString()
         .trim()
         .toLowerCase()
-        .replace(/[–—−\-]/g, "")   // إزالة كل أنواع الشرطة
-        .replace(/[^a-z0-9]/g, ""); // إبقاء حروف إنجليزية وأرقام فقط
+        .replace(/[–—−\-]/g, "")
+        .replace(/[^a-z0-9]/g, "");
     }
 
     // 🔍 بحث القواعد + ورقة war بنفس مربع البحث
@@ -766,7 +744,6 @@ function renderNav(activeHref) {
         const rules = Array.isArray(rulesRes) ? rulesRes : [];
         const war = warRes || {};
 
-        // من الـ API
         const warehouseList = Array.isArray(war.warehouseList) ? war.warehouseList : [];
         const supplierList  = Array.isArray(war.supplierList)  ? war.supplierList  : [];
         const quantityList  = Array.isArray(war.quantityList)  ? war.quantityList  : [];
@@ -782,7 +759,6 @@ function renderNav(activeHref) {
 
         let html = "";
 
-        // 1) نتائج القواعد
         if (rules.length) {
           html += `<div style="margin-bottom:8px;font-weight:600;">نتائج القواعد:</div>`;
           rules.forEach(r => {
@@ -797,7 +773,6 @@ function renderNav(activeHref) {
           html += `<hr/>`;
         }
 
-        // 2) Warehouse – تمييز أول نتيجة (الأقرب + الأحدث حسب السيرفر)
         if (hasWarehouse) {
           html += `
             <div style="margin-bottom:6px;font-weight:600;">الـ Warehouse (من ورقة war):</div>
@@ -833,7 +808,6 @@ function renderNav(activeHref) {
           html += `<hr/>`;
         }
 
-        // 3) المورد – عرض عادي
         if (hasSupplier) {
           html += `
             <div style="margin-bottom:6px;font-weight:600;">المورد (من ورقة war):</div>
@@ -860,7 +834,6 @@ function renderNav(activeHref) {
           html += `<hr/>`;
         }
 
-        // 4) الكمية – عرض عادي
         if (hasQuantity) {
           html += `
             <div style="margin-bottom:6px;font-weight:600;">الكمية (من ورقة war):</div>
