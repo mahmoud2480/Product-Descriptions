@@ -562,225 +562,219 @@
         }
 
         const task = res.task || {};
-        cons
-    const product = res.product || null;
-    const rules = res.qualityRules || [];
+        const product = res.product || null;
+        const rules = res.qualityRules || [];
 
-    const d = task.TaskDate
-      ? new Date(task.TaskDate).toLocaleString("ar-SY")
-      : "";
+        const d = task.TaskDate
+          ? new Date(task.TaskDate).toLocaleString("ar-SY")
+          : "";
 
-    // ✅ هنا التعديل: لو ما في منتج، نعرض الملاحظات السابقة بدل "لا توجد بيانات منتج"
-    let productHtml;
-    if (product) {
-      productHtml = `
-        <div><strong>اسم المنتج:</strong> ${product.ProductName || ""}</div>
-        <div><strong>كود المنتج:</strong> ${product.ProductCode || ""}</div>
-        ${
-          product.ProductURL
-            ? `<div><a href="${product.ProductURL}" target="_blank">فتح المنتج في صفحة جديدة</a></div>
-               <iframe class="product-frame" src="${product.ProductURL}"></iframe>`
-            : ""
+        // ✅ لو ما في منتج، نعرض الملاحظات السابقة بدل "لا توجد بيانات منتج"
+        let productHtml;
+        if (product) {
+          productHtml = `
+            <div><strong>اسم المنتج:</strong> ${product.ProductName || ""}</div>
+            <div><strong>كود المنتج:</strong> ${product.ProductCode || ""}</div>
+            ${
+              product.ProductURL
+                ? `<div><a href="${product.ProductURL}" target="_blank">فتح المنتج في صفحة جديدة</a></div>
+                   <iframe class="product-frame" src="${product.ProductURL}"></iframe>`
+                : ""
+            }
+          `;
+        } else {
+          const prevNotes =
+            task.AuditorNotes && task.AuditorNotes.trim()
+              ? task.AuditorNotes
+              : "لا توجد ملاحظات مسجلة.";
+          productHtml = `
+            <div>لا توجد بيانات منتج لهذه المهمة.</div>
+            <div style="margin-top:4px;"><strong>ملاحظات سابقة للمدقق:</strong> ${prevNotes}</div>
+          `;
         }
-      `;
-    } else {
-      const prevNotes =
-        task.AuditorNotes && task.AuditorNotes.trim()
-          ? task.AuditorNotes
-          : "لا توجد ملاحظات مسجلة.";
-      productHtml = `
-        <div>لا توجد بيانات منتج لهذه المهمة.</div>
-        <div style="margin-top:4px;"><strong>ملاحظات سابقة للمدقق:</strong> ${prevNotes}</div>
-      `;
-    }
 
-    let rulesHtml = "";
-    if (!rules.length) {
-      rulesHtml = "<div>لا توجد قواعد جودة لهذا المنتج / هذه المهمة.</div>";
-    } else {
-      rulesHtml = rules
-        .map((r, index) => {
-          const id = "rule_" + index;
-          const status = r.Status || "na";
-          const ruleId =
-            r.RuleID != null && r.RuleID !== "" ? r.RuleID : index;
+        let rulesHtml = "";
+        if (!rules.length) {
+          rulesHtml = "<div>لا توجد قواعد جودة لهذا المنتج / هذه المهمة.</div>";
+        } else {
+          rulesHtml = rules
+            .map((r, index) => {
+              const id = "rule_" + index;
+              const status = r.Status || "na";
+              const ruleId =
+                r.RuleID != null && r.RuleID !== "" ? r.RuleID : index;
 
-          return `
-          <div class="rule-row" data-rule-index="${index}" data-rule-id="${ruleId}">
-            <div class="rule-text">${r.Description || ""}</div>
-            <div class="rule-points">${r.Points || 0} نقطة</div>
-            <div class="rule-options">
-              <label>
-                <input type="radio" name="${id}" value="correct" ${
-            status === "correct" ? "checked" : ""
-          } /> ✅ صح
-              </label>
-              <label>
-                <input type="radio" name="${id}" value="wrong" ${
-            status === "wrong" ? "checked" : ""
-          } /> ❌ خطأ
-              </label>
-              <label>
-                <input type="radio" name="${id}" value="na" ${
-            status === "na" ? "checked" : ""
-          } /> ⭕ لا ينطبق
-              </label>
-            </div>
+              return `
+              <div class="rule-row" data-rule-index="${index}" data-rule-id="${ruleId}">
+                <div class="rule-text">${r.Description || ""}</div>
+                <div class="rule-points">${r.Points || 0} نقطة</div>
+                <div class="rule-options">
+                  <label>
+                    <input type="radio" name="${id}" value="correct" ${
+                status === "correct" ? "checked" : ""
+              } /> ✅ صح
+                  </label>
+                  <label>
+                    <input type="radio" name="${id}" value="wrong" ${
+                status === "wrong" ? "checked" : ""
+              } /> ❌ خطأ
+                  </label>
+                  <label>
+                    <input type="radio" name="${id}" value="na" ${
+                status === "na" ? "checked" : ""
+              } /> ⭕ لا ينطبق
+                  </label>
+                </div>
+              </div>
+            `;
+            })
+            .join("");
+        }
+
+        const follow =
+          task.EmployeeFollowUp === "YES"
+            ? "نعم"
+            : task.EmployeeFollowUp === "NO"
+            ? "لا"
+            : "غير محدد";
+
+        container.innerHTML = `
+          <div><strong>الموظف:</strong> ${task.EmployeeName || ""} (${task.EmployeeCode || ""})</div>
+          <div><strong>تاريخ المهمة:</strong> ${d}</div>
+          <div><strong>نوع المهمة:</strong> ${task.TaskType || ""}</div>
+          <div><strong>كود المنتج:</strong> ${task.ProductCode || ""}</div>
+          <div><strong>تصنيف المنتج:</strong> ${task.ProductCategory || ""}</div>
+          <div><strong>تنفيذ ملاحظات التدقيق:</strong> ${follow}</div>
+          <hr />
+
+          <h3 style="font-size:0.95rem;">بيانات المنتج / ملاحظات</h3>
+          ${productHtml}
+          <hr />
+
+          <h3 style="font-size:0.95rem;">بنود الجودة</h3>
+          <div id="rulesContainer">
+            ${rulesHtml}
           </div>
+
+          <div class="summary-box" id="qualitySummary">
+            مجموع النقاط: 0 / 0 (0%)
+          </div>
+
+          <label>ملاحظات المدقق للموظف</label>
+          <textarea id="auditNotes">${task.AuditorNotes || ""}</textarea>
+
+          <label>حالة التدقيق</label>
+          <select id="auditStatus">
+            <option value="غير مدقق"${task.AuditStatus === "غير مدقق" ? " selected" : ""}>غير مدقق</option>
+            <option value="تم التدقيق"${task.AuditStatus === "تم التدقيق" ? " selected" : ""}>تم التدقيق</option>
+            <option value="يحتاج تعديل"${task.AuditStatus === "يحتاج تعديل" ? " selected" : ""}>يحتاج تعديل</option>
+          </select>
+
+          <button onclick="saveAudit()">حفظ التدقيق</button>
+          <div class="msg" id="auditMsg"></div>
         `;
-        })
-        .join("");
+
+        const rulesContainer = document.getElementById("rulesContainer");
+        if (rulesContainer && rules.length) {
+          rulesContainer.addEventListener("change", updateQualitySummary);
+          updateQualitySummary();
+        }
+      } catch (err) {
+        console.error(err);
+        container.textContent = "حدث خطأ أثناء تحميل التفاصيل.";
+      }
     }
 
-    const follow =
-      task.EmployeeFollowUp === "YES"
-        ? "نعم"
-        : task.EmployeeFollowUp === "NO"
-        ? "لا"
-        : "غير محدد";
+    function updateQualitySummary() {
+      const summaryEl = document.getElementById("qualitySummary");
+      if (!summaryEl) return;
 
-    container.innerHTML = `
-      <div><strong>الموظف:</strong> ${task.EmployeeName || ""} (${
-      task.EmployeeCode || ""
-    })</div>
-      <div><strong>تاريخ المهمة:</strong> ${d}</div>
-      <div><strong>نوع المهمة:</strong> ${task.TaskType || ""}</div>
-      <div><strong>كود المنتج:</strong> ${task.ProductCode || ""}</div>
-      <div><strong>تصنيف المنتج:</strong> ${task.ProductCategory || ""}</div>
-      <div><strong>تنفيذ ملاحظات التدقيق:</strong> ${follow}</div>
-      <hr />
+      const rulesContainer = document.getElementById("rulesContainer");
+      const rows = rulesContainer
+        ? rulesContainer.querySelectorAll(".rule-row")
+        : [];
+      let totalPossible = 0;
+      let totalEarned = 0;
 
-      <h3 style="font-size:0.95rem;">بيانات المنتج / ملاحظات</h3>
-      ${productHtml}
-      <hr />
+      rows.forEach((row) => {
+        const ptsText = row.querySelector(".rule-points").textContent || "0";
+        const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
+        if (pts <= 0) return;
+        totalPossible += pts;
 
-      <h3 style="font-size:0.95rem;">بنود الجودة</h3>
-      <div id="rulesContainer">
-        ${rulesHtml}
-      </div>
+        const input = row.querySelector('input[type="radio"]:checked');
+        if (input && input.value === "correct") {
+          totalEarned += pts;
+        }
+      });
 
-      <div class="summary-box" id="qualitySummary">
-        مجموع النقاط: 0 / 0 (0%)
-      </div>
-
-      <label>ملاحظات المدقق للموظف</label>
-      <textarea id="auditNotes">${task.AuditorNotes || ""}</textarea>
-
-      <label>حالة التدقيق</label>
-      <select id="auditStatus">
-        <option value="غير مدقق"${
-          task.AuditStatus === "غير مدقق" ? " selected" : ""
-        }>غير مدقق</option>
-        <option value="تم التدقيق"${
-          task.AuditStatus === "تم التدقيق" ? " selected" : ""
-        }>تم التدقيق</option>
-        <option value="يحتاج تعديل"${
-          task.AuditStatus === "يحتاج تعديل" ? " selected" : ""
-        }>يحتاج تعديل</option>
-      </select>
-
-      <button onclick="saveAudit()">حفظ التدقيق</button>
-      <div class="msg" id="auditMsg"></div>
-    `;
-
-    const rulesContainer = document.getElementById("rulesContainer");
-    if (rulesContainer && rules.length) {
-      rulesContainer.addEventListener("change", updateQualitySummary);
-      updateQualitySummary();
+      const percent = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
+      summaryEl.textContent =
+        "مجموع النقاط: " +
+        totalEarned +
+        " / " +
+        totalPossible +
+        " (" +
+        percent.toFixed(0) +
+        "%)";
     }
-  } catch (err) {
-    console.error(err);
-    container.textContent = "حدث خطأ أثناء تحميل التفاصيل.";
-  }
-}
 
-function updateQualitySummary() {
-  const summaryEl = document.getElementById("qualitySummary");
-  if (!summaryEl) return;
+    async function saveAudit() {
+      if (currentTaskId == null) return;
+      const msg = document.getElementById("auditMsg");
+      msg.style.color = "#374151";
+      msg.textContent = "...جاري الحفظ";
 
-  const rulesContainer = document.getElementById("rulesContainer");
-  const rows = rulesContainer
-    ? rulesContainer.querySelectorAll(".rule-row")
-    : [];
-  let totalPossible = 0;
-  let totalEarned = 0;
+      const rulesContainer = document.getElementById("rulesContainer");
+      const rows = rulesContainer
+        ? rulesContainer.querySelectorAll(".rule-row")
+        : [];
+      const ruleResults = [];
 
-  rows.forEach((row) => {
-    const ptsText = row.querySelector(".rule-points").textContent || "0";
-    const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
-    if (pts <= 0) return;
-    totalPossible += pts;
+      rows.forEach((row) => {
+        const index = row.getAttribute("data-rule-index");
+        const ruleId = row.getAttribute("data-rule-id");
+        const descEl = row.querySelector(".rule-text");
+        const ptsText = row.querySelector(".rule-points").textContent || "0";
+        const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
+        const input = row.querySelector('input[type="radio"]:checked');
+        const status = input ? input.value : "na";
 
-    const input = row.querySelector('input[type="radio"]:checked');
-    if (input && input.value === "correct") {
-      totalEarned += pts;
+        ruleResults.push({
+          ruleId: ruleId != null ? ruleId : index,
+          description: descEl ? descEl.textContent : "",
+          status: status,
+          points: pts,
+        });
+      });
+
+      const notes = document.getElementById("auditNotes").value || "";
+      const status = document.getElementById("auditStatus").value || "تم التدقيق";
+
+      try {
+        const res = await callApi("saveAudit", {
+          taskId: currentTaskId,
+          ruleResults: ruleResults,
+          notes: notes,
+          status: status,
+        });
+
+        if (res.success) {
+          msg.style.color = "#16a34a";
+          msg.textContent = "تم حفظ التدقيق بنجاح.";
+          reloadTasks();
+        } else {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "فشل الحفظ.";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.style.color = "#b91c1c";
+        msg.textContent = "خطأ في الاتصال بالسيرفر.";
+      }
     }
-  });
 
-  const percent = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
-  summaryEl.textContent =
-    "مجموع النقاط: " +
-    totalEarned +
-    " / " +
-    totalPossible +
-    " (" +
-    percent.toFixed(0) +
-    "%)";
-}
-
-async function saveAudit() {
-  if (currentTaskId == null) return;
-  const msg = document.getElementById("auditMsg");
-  msg.style.color = "#374151";
-  msg.textContent = "...جاري الحفظ";
-
-  const rulesContainer = document.getElementById("rulesContainer");
-  const rows = rulesContainer
-    ? rulesContainer.querySelectorAll(".rule-row")
-    : [];
-  const ruleResults = [];
-
-  rows.forEach((row) => {
-    const index = row.getAttribute("data-rule-index");
-    const ruleId = row.getAttribute("data-rule-id");
-    const descEl = row.querySelector(".rule-text");
-    const ptsText = row.querySelector(".rule-points").textContent || "0";
-    const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
-    const input = row.querySelector('input[type="radio"]:checked');
-    const status = input ? input.value : "na";
-
-    ruleResults.push({
-      ruleId: ruleId != null ? ruleId : index,
-      description: descEl ? descEl.textContent : "",
-      status: status,
-      points: pts,
-    });
-  });
-
-  const notes = document.getElementById("auditNotes").value || "";
-  const status = document.getElementById("auditStatus").value || "تم التدقيق";
-
-  try {
-    const res = await callApi("saveAudit", {
-      taskId: currentTaskId,
-      ruleResults: ruleResults,
-      notes: notes,
-      status: status,
-    });
-
-    if (res.success) {
-      msg.style.color = "#16a34a";
-      msg.textContent = "تم حفظ التدقيق بنجاح.";
-      reloadTasks();
-    } else {
-      msg.style.color = "#b91c1c";
-      msg.textContent = "فشل الحفظ.";
-    }
-  } catch (err) {
-    console.error(err);
-    msg.style.color = "#b91c1c";
-    msg.textContent = "خطأ في الاتصال بالسيرفر.";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadUser);
+    document.addEventListener("DOMContentLoaded", loadUser);
+  </script>
+</body>
+</html>
