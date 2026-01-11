@@ -255,6 +255,10 @@
       <label>تصنيف المنتج</label>
       <select id="productCategory"></select>
 
+      <label>ملاحظات الموظف (اختياري)</label>
+      <textarea id="employeeNotes"></textarea>
+
+
       <div id="branchSection" style="display:none;">
         <label>عدد التفريعات</label>
         <input id="branchCount" type="number" min="0" />
@@ -278,19 +282,21 @@
       <h2 style="margin-top:18px;">كل مهامي السابقة</h2>
       <div style="max-height:280px;overflow-y:auto;">
         <table id="tasksTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>تاريخ</th>
-              <th>نوع</th>
-              <th>كود المنتج</th>
-              <th>الوقت (د)</th>
-              <th>حالة التدقيق</th>
-              <th>نقاط الجودة</th>
-              <th>ملاحظات المدقق</th>
-              <th>تنفيذ الملاحظات</th>
-            </tr>
-          </thead>
+<thead>
+  <tr>
+    <th>#</th>
+    <th>تاريخ</th>
+    <th>نوع</th>
+    <th>كود المنتج</th>
+    <th>الوقت (د)</th>
+    <th>حالة التدقيق</th>
+    <th>نقاط الجودة</th>
+    <th>ملاحظات الموظف</th>
+    <th>ملاحظات المدقق</th>
+    <th>تنفيذ الملاحظات</th>
+  </tr>
+</thead>
+
           <tbody></tbody>
         </table>
       </div>
