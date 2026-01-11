@@ -362,27 +362,57 @@
       return rolesTextUpper.includes(code);
     }
 
-    function renderNav(activeHref) {
-      const container = document.getElementById("navButtons");
-      if (!container) return;
-      container.innerHTML = "";
+function renderNav(activeHref) {
+  const container = document.getElementById("navButtons");
+  if (!container) return;
+  container.innerHTML = "";
 
-      const links = [
-        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
-        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
-        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
-        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
-        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
-        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
-        { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
-        { code: "AUDITOR_EXTENDED", label: "تقارير ",  href: "reports.html" },
-        {
-  code: "EMP",
-  label: "طلبات الإجازات",
-  href: `https://mahmoud2480.github.io/gstore-hr-leave/?empCode=${user.employeeCode}&name=${encodeURIComponent(user.name)}&role=${encodeURIComponent(user.role)}`
+  const leaveUrl =
+    "https://mahmoud2480.github.io/gstore-hr-leave/?" +
+    "empCode=" + encodeURIComponent(user.employeeCode || "") +
+    "&name="  + encodeURIComponent(user.name || "") +
+    "&role="  + encodeURIComponent(user.role || "");
+
+  const links = [
+    { code: "EMP",              label: "واجهة الموظف",    href: "employee.html" },
+    { code: "EMP",              label: "أفكار الموظف",    href: "ideas.html" },
+    { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",     href: "auditor.html" },
+    { code: "EVALUATOR",        label: "واجهة التقييم",   href: "evaluator.html" },
+    { code: "ADMIN",            label: "لوحة الإدارة",    href: "admin.html" },
+    { code: "ADMIN",            label: "إدارة الأفكار",   href: "ideas_admin.html" },
+    { code: "EVALUATOR",        label: "الاختبار الشهري", href: "tests.html" },
+    { code: "AUDITOR_EXTENDED", label: "تقارير",          href: "reports.html" },
+
+    // ⭐ زر نظام طلبات الإجازات (يفتح في تبويب جديد مع تمرير بيانات الموظف)
+    { code: "EMP", label: "طلبات الإجازات", href: leaveUrl, external: true }
+  ];
+
+  links.forEach(item => {
+    if (!hasRole(item.code)) return;
+
+    const btn = document.createElement("button");
+    btn.textContent = item.label;
+
+    if (!item.external && activeHref === item.href) {
+      btn.classList.add("active");
+    }
+
+    if (item.external) {
+      // رابط خارجي → افتح في تبويب جديد
+      btn.onclick = () => window.open(item.href, "_blank");
+    } else {
+      // روابط الواجهات الداخلية
+      btn.onclick = () => {
+        if (!window.location.pathname.endsWith(item.href)) {
+          window.location.href = item.href;
+        }
+      };
+    }
+
+    container.appendChild(btn);
+  });
 }
 
-      ];
 
       links.forEach(item => {
         if (!hasRole(item.code)) return;
