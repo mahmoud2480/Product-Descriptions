@@ -160,46 +160,45 @@
       min-height: 1.2em;
     }
 
-/* ⭐ تنسيق أوضح لبنود الجودة */
-.rule-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.95rem;          /* تكبير الخط */
-  padding: 6px 8px;            /* مسافة داخلية */
-  background: #f9fafb;         /* خلفية فاتحة خفيفة */
-  border-radius: 8px;
-}
+    /* ⭐ تنسيق أوضح لبنود الجودة */
+    .rule-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95rem;          /* تكبير الخط */
+      padding: 6px 8px;            /* مسافة داخلية */
+      background: #f9fafb;         /* خلفية فاتحة خفيفة */
+      border-radius: 8px;
+    }
 
-.rule-text {
-  flex: 1;
-  text-align: right;
-  font-weight: 700;            /* بولد واضح */
-  color: #111827;              /* لون داكن وواضح */
-  line-height: 1.6;
-}
+    .rule-text {
+      flex: 1;
+      text-align: right;
+      font-weight: 700;            /* بولد واضح */
+      color: #111827;              /* لون داكن وواضح */
+      line-height: 1.6;
+    }
 
-.rule-points {
-  white-space: nowrap;
-  font-size: 0.85rem;          /* أكبر قليلاً */
-  color: #374151;
-  margin-inline: 6px;
-  font-weight: 600;            /* بولد خفيف */
-}
+    .rule-points {
+      white-space: nowrap;
+      font-size: 0.85rem;          /* أكبر قليلاً */
+      color: #374151;
+      margin-inline: 6px;
+      font-weight: 600;            /* بولد خفيف */
+    }
 
-.rule-options {
-  display: flex;
-  gap: 6px;
-  white-space: nowrap;
-}
+    .rule-options {
+      display: flex;
+      gap: 6px;
+      white-space: nowrap;
+    }
 
-.rule-options label {
-  margin: 0;
-  font-size: 0.8rem;           /* تكبير بسيط لخيارات صح / خطأ / لا ينطبق */
-}
-
+    .rule-options label {
+      margin: 0;
+      font-size: 0.8rem;           /* تكبير بسيط لخيارات صح / خطأ / لا ينطبق */
+    }
 
     .product-frame {
       width: 100%;
@@ -707,6 +706,7 @@
       }
     }
 
+    // ✅ ملخص الجودة الآن يستثني "لا ينطبق" من المجموع مثل السيرفر
     function updateQualitySummary() {
       const summaryEl = document.getElementById("qualitySummary");
       if (!summaryEl) return;
@@ -722,12 +722,18 @@
         const ptsText = row.querySelector(".rule-points").textContent || "0";
         const pts = Number(ptsText.replace(/[^\d.]/g, "")) || 0;
         if (pts <= 0) return;
-        totalPossible += pts;
 
         const input = row.querySelector('input[type="radio"]:checked');
-        if (input && input.value === "correct") {
-          totalEarned += pts;
+        const status = input ? input.value : "na";
+
+        // فقط correct / wrong تدخل في المجموع الممكن
+        if (status === "correct" || status === "wrong") {
+          totalPossible += pts;
+          if (status === "correct") {
+            totalEarned += pts;
+          }
         }
+        // ⭕ لا ينطبق → لا يضاف لا إلى الممكن ولا المحصل
       });
 
       const percent = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
