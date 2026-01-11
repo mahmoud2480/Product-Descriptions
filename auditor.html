@@ -569,7 +569,17 @@
           ? new Date(task.TaskDate).toLocaleString("ar-SY")
           : "";
 
-        // ✅ لو ما في منتج، نعرض الملاحظات السابقة بدل "لا توجد بيانات منتج"
+        // ✅ ملاحظات الموظف + ملاحظات سابقة للمدقق
+        const employeeNotes =
+          task.EmployeeNotes && String(task.EmployeeNotes).trim()
+            ? String(task.EmployeeNotes)
+            : "لا توجد ملاحظات مسجلة من الموظف.";
+
+        const prevNotes =
+          task.AuditorNotes && String(task.AuditorNotes).trim()
+            ? String(task.AuditorNotes)
+            : "لا توجد ملاحظات مسجلة.";
+
         let productHtml;
         if (product) {
           productHtml = `
@@ -581,14 +591,13 @@
                    <iframe class="product-frame" src="${product.ProductURL}"></iframe>`
                 : ""
             }
+            <div style="margin-top:6px;"><strong>ملاحظات الموظف:</strong> ${employeeNotes}</div>
+            <div style="margin-top:4px;"><strong>ملاحظات سابقة للمدقق:</strong> ${prevNotes}</div>
           `;
         } else {
-          const prevNotes =
-            task.AuditorNotes && task.AuditorNotes.trim()
-              ? task.AuditorNotes
-              : "لا توجد ملاحظات مسجلة.";
           productHtml = `
             <div>لا توجد بيانات منتج لهذه المهمة.</div>
+            <div style="margin-top:6px;"><strong>ملاحظات الموظف:</strong> ${employeeNotes}</div>
             <div style="margin-top:4px;"><strong>ملاحظات سابقة للمدقق:</strong> ${prevNotes}</div>
           `;
         }
