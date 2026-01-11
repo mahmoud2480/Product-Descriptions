@@ -1,3 +1,568 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة المدقق</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", system-ui, sans-serif;
+      background: #f4f7fb;
+    }
+
+    header {
+      background: #0d6efd;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    header a {
+      color: #fff;
+    }
+
+    .nav-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nav-buttons button {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-family: "Cairo", system-ui, sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .nav-buttons button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .nav-buttons button.active {
+      background: #fff;
+      color: #0d6efd;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1.5fr;
+      gap: 10px;
+      padding: 10px;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th,
+    td {
+      border: 1px solid #eee;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    th {
+      background: #f1f3f7;
+    }
+    tr:hover {
+      background: #f9fafc;
+      cursor: pointer;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      align-items: flex-end;
+    }
+    .filters label {
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
+    .filters select {
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.85rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 6px 8px;
+    }
+    select,
+    input {
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 4px 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 8px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #0d6efd;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .msg {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      min-height: 1.2em;
+    }
+
+    .rule-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+    }
+    .rule-text {
+      flex: 1;
+      text-align: right;
+    }
+    .rule-points {
+      white-space: nowrap;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-inline: 4px;
+    }
+    .rule-options {
+      display: flex;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .rule-options label {
+      margin: 0;
+      font-size: 0.75rem;
+    }
+
+    .product-frame {
+      width: 100%;
+      height: 200px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      margin-top: 6px;
+    }
+
+    .summary-box {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>لوحة المدقق</h1>
+      <div>
+        <span id="userName"></span> |
+        <a href="#" onclick="logout()">تسجيل الخروج</a>
+      </div>
+    </div>
+    <div class="nav-buttons" id="navButtons"></div>
+  </header>
+
+  <div class="layout">
+    <!-- تفاصيل التدقيق -->
+    <div class="card">
+      <h2>تفاصيل التدقيق</h2>
+      <div id="detailsArea">
+        اختر مهمة من الجدول لعرض التفاصيل.
+      </div>
+    </div>
+
+    <!-- قائمة المهام -->
+    <div class="card">
+      <h2>المهام المطلوبة للتدقيق</h2>
+      <div class="filters">
+        <div>
+          <label>الشهر</label><br />
+          <select id="filterMonth" onchange="applyFiltersAndRender()"></select>
+        </div>
+        <div>
+          <label>حالة التدقيق</label><br />
+          <select id="filterStatus" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+            <option value="غير مدقق">غير مدقق</option>
+            <option value="تم التدقيق">تم التدقيق</option>
+            <option value="يحتاج تعديل">يحتاج تعديل</option>
+          </select>
+        </div>
+        <div>
+          <label>الموظف</label><br />
+          <select id="filterEmployee" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>نوع المهمة</label><br />
+          <select id="filterTaskType" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+            <option value="رفع منتج">رفع منتج</option>
+            <option value="مهمة موكلة">مهمة موكلة</option>
+          </select>
+        </div>
+        <div>
+          <label>تصنيف المنتج</label><br />
+          <select id="filterCategory" onchange="applyFiltersAndRender()">
+            <option value="">الكل</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="max-height: calc(100vh - 210px); overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>كود الموظف</th>
+              <th>اسم الموظف</th>
+              <th>نوع المهمة</th>
+              <th>كود المنتج</th>
+              <th>تصنيف المنتج</th>
+              <th>تاريخ المهمة</th>
+              <th>حالة التدقيق</th>
+              <th>نقاط الجودة</th>
+            </tr>
+          </thead>
+          <tbody id="tasksBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- إعدادات الـ API -->
+  <script src="config.js"></script>
+
+  <script>
+    const API_URL = window.API_URL;
+
+    async function callApi(action, payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload }),
+      });
+      const txt = await res.text();
+      return JSON.parse(txt);
+    }
+
+    let user = null;
+    let allTasks = [];
+    let currentTaskId = null;
+
+    function logout() {
+      localStorage.removeItem("taskUser");
+      window.location.href = "index.html";
+    }
+
+    // ✅ نفس منطق الصلاحيات الموحّد
+    function hasRole(code) {
+      if (!user || !user.role) return false;
+
+      const rolesTextUpper = user.role.toString().toUpperCase();
+      const rolesTextRaw   = user.role.toString();
+
+      if (code === "AUDITOR_EXTENDED") {
+        return (
+          rolesTextUpper.includes("AUDITOR") ||
+          rolesTextUpper.includes("ADMIN")   ||
+          rolesTextUpper.includes("MANAGER") ||
+          rolesTextRaw.includes("مدير")      ||
+          rolesTextRaw.includes("رئيس قسم")  ||
+          rolesTextRaw.includes("مدقق")
+        );
+      }
+
+      return rolesTextUpper.includes(code);
+    }
+
+    // ✅ شريط التنقل مع زر تقارير الجودة
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",   href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",   href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",    href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",  href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",   href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",  href: "ideas_admin.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير الجودة",  href: "reports.html" }
+      ];
+
+      links.forEach((item) => {
+        if (!hasRole(item.code)) return;
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        if (activeHref === item.href) btn.classList.add("active");
+        btn.onclick = () => {
+          if (!window.location.pathname.endsWith(item.href)) {
+            window.location.href = item.href;
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function initMonthFilter() {
+      const sel = document.getElementById("filterMonth");
+      const now = new Date();
+
+      sel.innerHTML = "";
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "كل الأشهر";
+      sel.appendChild(allOpt);
+
+      // آخر 6 أشهر (بما فيهم الشهر الحالي)
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = ("0" + (d.getMonth() + 1)).slice(-2);
+        const key = y + "-" + m;
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        sel.appendChild(opt);
+      }
+
+      const currentKey =
+        now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
+      sel.value = currentKey;
+    }
+
+    function loadUser() {
+      const str = localStorage.getItem("taskUser");
+      if (!str) {
+        window.location.href = "index.html";
+        return;
+      }
+      user = JSON.parse(str);
+
+      // ✅ يسمح فقط للمدقق الموسّع بالدخول هنا
+      if (!hasRole("AUDITOR_EXTENDED")) {
+        window.location.href = "employee.html";
+        return;
+      }
+
+      document.getElementById("userName").textContent =
+        user.name + " (" + (user.employeeCode || user.role) + ")";
+      renderNav("auditor.html");
+      initMonthFilter();
+      reloadTasks();
+    }
+
+    // 🔹 نطلب كل المهام من السيرفر
+    async function reloadTasks() {
+      const tbody = document.getElementById("tasksBody");
+      tbody.innerHTML = "<tr><td colspan='9'>...جاري التحميل</td></tr>";
+
+      try {
+        const res = await callApi("getTasksForAudit", {
+          filters: {}
+        });
+
+        allTasks = res || [];
+        buildEmployeeFilterFromData();
+        buildCategoryFilterFromData();
+        applyFiltersAndRender();
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+          "<tr><td colspan='9'>خطأ في الاتصال بالسيرفر</td></tr>";
+      }
+    }
+
+    function buildEmployeeFilterFromData() {
+      const sel = document.getElementById("filterEmployee");
+      const oldVal = sel.value;
+      const set = new Set();
+      allTasks.forEach((t) => {
+        if (t.EmployeeCode) {
+          set.add(t.EmployeeName + "|" + t.EmployeeCode);
+        }
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((v) => {
+        const [name, code] = v.split("|");
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name + " (" + code + ")";
+        sel.appendChild(opt);
+      });
+
+      if ([...set].some((v) => v.split("|")[1] === oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function buildCategoryFilterFromData() {
+      const sel = document.getElementById("filterCategory");
+      const oldVal = sel.value;
+      const set = new Set();
+      allTasks.forEach((t) => {
+        if (t.ProductCategory) set.add(t.ProductCategory);
+      });
+
+      sel.innerHTML = '<option value="">الكل</option>';
+      set.forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        sel.appendChild(opt);
+      });
+
+      if (set.has(oldVal)) {
+        sel.value = oldVal;
+      }
+    }
+
+    function applyFiltersAndRender() {
+      const tbody = document.getElementById("tasksBody");
+      if (!allTasks.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='9'>لا توجد مهام مطابقة للفلاتر الحالية</td></tr>";
+        document.getElementById("detailsArea").textContent =
+          "اختر مهمة من الجدول لعرض التفاصيل.";
+        return;
+      }
+
+      const monthKey = document.getElementById("filterMonth").value || "";
+      const status   = document.getElementById("filterStatus").value || "";
+      const type     = document.getElementById("filterTaskType").value || "";
+      const cat      = document.getElementById("filterCategory").value || "";
+      const empCode  = document.getElementById("filterEmployee").value || "";
+
+      const filtered = allTasks.filter((t) => {
+        if (monthKey) {
+          if (!t.TaskDate) return false;
+          const dt = new Date(t.TaskDate);
+          if (isNaN(dt.getTime())) return false;
+          const key =
+            dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2);
+          if (key !== monthKey) return false;
+        }
+
+        if (empCode && String(t.EmployeeCode || "") !== empCode) return false;
+        if (status && String(t.AuditStatus || "") !== status) return false;
+        if (type && String(t.TaskType || "") !== type) return false;
+        if (cat && String(t.ProductCategory || "") !== cat) return false;
+
+        return true;
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML =
+          "<tr><td colspan='9'>لا توجد مهام مطابقة للفلاتر الحالية</td></tr>";
+        document.getElementById("detailsArea").textContent =
+          "اختر مهمة من الجدول لعرض التفاصيل.";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      filtered.forEach((t) => {
+        const tr = document.createElement("tr");
+        const d = t.TaskDate
+          ? new Date(t.TaskDate).toLocaleDateString("ar-SY")
+          : "";
+        const qualityEarned  = Number(t.QualityEarned || 0);
+        const qualityPossible= Number(t.QualityPossible || 0);
+        const percent = qualityPossible > 0
+          ? Math.round((qualityEarned / qualityPossible) * 100)
+          : 0;
+        const qualityText =
+          qualityEarned + " / " + qualityPossible +
+          (qualityPossible ? " (" + percent + "%)" : "");
+
+        tr.innerHTML = `
+          <td>${t.TaskID}</td>
+          <td>${t.EmployeeCode || ""}</td>
+          <td>${t.EmployeeName || ""}</td>
+          <td>${t.TaskType || ""}</td>
+          <td>${t.ProductCode || ""}</td>
+          <td>${t.ProductCategory || ""}</td>
+          <td>${d}</td>
+          <td>${t.AuditStatus || ""}</td>
+          <td>${qualityText}</td>
+        `;
+        tr.onclick = () => openTaskDetails(t.TaskID);
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function openTaskDetails(taskId) {
+      currentTaskId = taskId;
+      const container = document.getElementById("detailsArea");
+      container.innerHTML = "...جاري تحميل تفاصيل المهمة";
+
+      try {
+        const res = await callApi("getAuditDetails", { taskId: taskId });
+        if (!res.success) {
+          container.textContent = "تعذر جلب تفاصيل المهمة.";
+          return;
+        }
+
+        const task = res.task || {};
+        cons
     const product = res.product || null;
     const rules = res.qualityRules || [];
 
