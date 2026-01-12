@@ -177,7 +177,7 @@
     input:focus,
     select:focus,
     textarea:focus {
-      border-color: --primary;
+      border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
       background: #fff;
     }
@@ -366,16 +366,14 @@
       </div>
       <div class="nav-right">
         <a href="index.html" style="color:#fff; font-size:0.8rem; text-decoration:none;">
-          ⬅ العودة للنظام
+          ⬅ الصفحة الرئيسية
         </a>
         <div class="user-pill" id="empInfo"></div>
       </div>
     </div>
 
-    <div class="nav-buttons">
-      <button type="button" class="primary">📌 تسجيل خطأ جديد</button>
-      <button type="button">📊 تقرير الأخطاء</button>
-    </div>
+    <!-- 🔹 شريط الأزرار الموحد لكل الواجهات -->
+    <div class="nav-buttons" id="navButtons"></div>
   </header>
 
   <main>
@@ -394,10 +392,9 @@
             <label for="store">المتجر</label>
             <select id="store" name="store">
               <option value="">اختر...</option>
-              <option value="G-Store">G-Store</option>
-              <option value="Rose Store">Rose Store</option>
-              <option value="Jeddo Asim">مطعم جدو عاصم</option>
-              <option value="Other">أخرى</option>
+              <option value="YourstoreQ8">YourstoreQ8</option>
+              <option value="GstoreQ8">GstoreQ8</option>
+              <option value="TnateeshQ8">TnateeshQ8</option>
             </select>
           </div>
 
@@ -467,7 +464,7 @@
 
         <div>
           <label for="filterStore">المتجر</label>
-          <input type="text" id="filterStore" placeholder="مثال: G-Store أو تركه فارغاً للكل" />
+          <input type="text" id="filterStore" placeholder="مثال: GstoreQ8 أو تركه فارغاً للكل" />
         </div>
 
         <div>
@@ -541,13 +538,17 @@
   </main>
 
   <script>
-    // 🛡️ حماية الصفحة حسب الدور
+    // 🧑‍💼 بيانات الموظف من التخزين المحلي
     const EMP = JSON.parse(localStorage.getItem("employeeData") || "{}");
-    const ALLOWED_ROLES = ["Admin", "AUDITOR", "Support","EVALUATOR"];
+    const empInfo = document.getElementById("empInfo");
 
-    if (!EMP || !EMP.role || !ALLOWED_ROLES.includes(EMP.role)) {
+    // 🛡️ حماية الصفحة حسب الدور
+    const roleUpper = (EMP.role || EMP.roleCode || "").toUpperCase();
+    const ALLOWED_ROLES = ["ADMIN","AUDITOR","AUDITOR_EXTENDED","SUPPORT","EVALUATOR"];
+
+    if (!ALLOWED_ROLES.includes(roleUpper)) {
       alert("🚫 ليس لديك صلاحية الوصول إلى صفحة الدعم الفني.");
-      window.location.href = "login.html"; // عدلها حسب اسم صفحة تسجيل الدخول عندك
+      window.location.href = "login.html"; 
     }
 
     // ✅ غيّر هذا الرابط إلى رابط الـ Web App الخاص بالسكربت
@@ -571,7 +572,6 @@
     const reportTableBody = document.getElementById("reportTableBody");
     const byExecutorBox = document.getElementById("byExecutorBox");
     const byTypeBox = document.getElementById("byTypeBox");
-    const empInfo = document.getElementById("empInfo");
 
     function setFormStatus(message, type) {
       if (!message) {
@@ -615,6 +615,71 @@
       const hh = String(d.getHours()).padStart(2, "0");
       const mm = String(d.getMinutes()).padStart(2, "0");
       return `${y}/${m}/${day} - ${hh}:${mm}`;
+    }
+
+    // 🧭 دالة الشريط العلوي الموحد لكل الصفحات
+    function renderNav(activeHref) {
+      const container = document.getElementById("navButtons");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const ROLE = (EMP.role || EMP.roleCode || "").toUpperCase();
+      if (!ROLE) return;
+
+      // جميع الروابط المتاحة
+      const links = [
+        { code: "EMP",              label: "واجهة الموظف",     href: "employee.html" },
+        { code: "EMP",              label: "أفكار الموظف",     href: "ideas.html" },
+        { code: "AUDITOR_EXTENDED", label: "لوحة المدقق",      href: "auditor.html" },
+        { code: "EVALUATOR",        label: "واجهة التقييم",    href: "evaluator.html" },
+        { code: "ADMIN",            label: "لوحة الإدارة",     href: "admin.html" },
+        { code: "ADMIN",            label: "إدارة الأفكار",    href: "ideas_admin.html" },
+        { code: "EVALUATOR",        label: "الاختبار الشهري",  href: "tests.html" },
+        { code: "AUDITOR_EXTENDED", label: "تقارير",           href: "reports.html" },
+        { code: "SUPPORT",          label: "الدعم الفني",      href: "support.html" }
+      ];
+
+      const allowedCodes = new Set();
+
+      switch (ROLE) {
+        case "ADMIN":
+          ["EMP","AUDITOR_EXTENDED","EVALUATOR","ADMIN","SUPPORT"].forEach(c => allowedCodes.add(c));
+          break;
+        case "AUDITOR_EXTENDED":
+        case "AUDITOR":
+          ["EMP","AUDITOR_EXTENDED"].forEach(c => allowedCodes.add(c));
+          break;
+        case "EVALUATOR":
+          ["EMP","EVALUATOR"].forEach(c => allowedCodes.add(c));
+          break;
+        case "SUPPORT":
+          ["SUPPORT"].forEach(c => allowedCodes.add(c));
+          break;
+        case "EMP":
+        case "EMPLOYEE":
+          ["EMP"].forEach(c => allowedCodes.add(c));
+          break;
+        default:
+          return;
+      }
+
+      links
+        .filter(link => allowedCodes.has(link.code))
+        .forEach(link => {
+          const a = document.createElement("a");
+          a.href = link.href;
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+
+          if (activeHref && activeHref === link.href) {
+            btn.className = "primary";
+          }
+
+          btn.textContent = link.label;
+          a.appendChild(btn);
+          container.appendChild(a);
+        });
     }
 
     // 🟦 إرسال خطأ جديد
@@ -682,7 +747,6 @@
       const store = document.getElementById("store");
       const errorType = document.getElementById("errorType");
 
-      // نعيد فقط الحقول المرتبطة بالخطأ ونحافظ على recordedBy
       orderNumber.value = "";
       errorExecutor.value = "";
       details.value = "";
@@ -838,7 +902,7 @@
       loadReport(true);
     });
 
-    // تحميل تقرير الشهر الحالي عند فتح الصفحة + تهيئة بيانات الموظف
+    // تحميل تقرير الشهر الحالي عند فتح الصفحة + تهيئة بيانات الموظف + شريط التنقل
     window.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       const y = now.getFullYear();
@@ -846,14 +910,12 @@
       filterMonth.value = `${y}-${m}`;
       loadReport(false);
 
-      // عرض اسم/كود الموظف في الهيدر
       if (empInfo && (EMP.employeeCode || EMP.name)) {
         empInfo.textContent = `المستخدم: ${
           EMP.employeeCode ? EMP.employeeCode + " - " : ""
-        }${EMP.name || ""} (${EMP.role || ""})`;
+        }${EMP.name || ""} (${EMP.role || EMP.roleCode || ""})`;
       }
 
-      // تعبئة حقل "الموظف الذي سجل الخطأ" تلقائياً
       const recInput = document.getElementById("recordedBy");
       if (recInput && (EMP.employeeCode || EMP.name)) {
         recInput.value = `${
@@ -863,6 +925,9 @@
         }`;
         recInput.readOnly = true;
       }
+
+      // شريط التنقل الموحد + تمييز صفحة الدعم الفني الحالية
+      renderNav("support.html");
     });
   </script>
 </body>
