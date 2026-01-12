@@ -411,6 +411,12 @@
             <input type="text" id="orderNumber" name="orderNumber" placeholder="مثال: 123456" />
           </div>
 
+          <!-- ✅ حقل جديد: كود المنتج -->
+          <div>
+            <label for="productCode">كود المنتج (إن وجد)</label>
+            <input type="text" id="productCode" name="productCode" placeholder="مثال: G7812" />
+          </div>
+
           <div>
             <label for="errorExecutor">منفذ الخطأ (اسم أو كود الموظف)</label>
             <input type="text" id="errorExecutor" name="errorExecutor" placeholder="مثال: A8" />
@@ -513,6 +519,12 @@
             <option value="">الكل</option>
           </select>
         </div>
+
+        <!-- ✅ فلتر جديد: كود المنتج -->
+        <div>
+          <label for="filterProductCode">كود المنتج</label>
+          <input type="text" id="filterProductCode" placeholder="مثال: G7812" />
+        </div>
       </div>
 
       <div class="inline" style="justify-content: space-between; margin-bottom:8px;">
@@ -546,6 +558,7 @@
               <th>الشهر</th>
               <th>المتجر</th>
               <th>رقم الطلب</th>
+              <th>كود المنتج</th> <!-- ✅ عمود جديد -->
               <th>منفذ الخطأ</th>
               <th>نوع الخطأ</th>
               <th>التفاصيل</th>
@@ -657,6 +670,7 @@
     const filterErrorType  = document.getElementById("filterErrorType");
     const filterExecutor   = document.getElementById("filterExecutor");
     const filterRecordedBy = document.getElementById("filterRecordedBy");
+    const filterProductCode = document.getElementById("filterProductCode"); // ✅
     const btnLoadReport    = document.getElementById("btnLoadReport");
     const btnClearFilters  = document.getElementById("btnClearFilters");
     const reportStatus     = document.getElementById("reportStatus");
@@ -783,6 +797,7 @@
       document.getElementById("requestDate").value   = isoToInputDate(row.RequestDate);
       document.getElementById("store").value         = row.Store || "";
       document.getElementById("orderNumber").value   = row.OrderNumber || "";
+      document.getElementById("productCode").value   = row.ProductCode || ""; // ✅
       document.getElementById("errorExecutor").value = row.ErrorExecutor || "";
       document.getElementById("errorType").value     = row.ErrorType || "";
       document.getElementById("details").value       = row.Details || "";
@@ -800,6 +815,7 @@
       document.getElementById("requestDate").value   = "";
       document.getElementById("store").value         = "";
       document.getElementById("orderNumber").value   = "";
+      document.getElementById("productCode").value   = ""; // ✅
       document.getElementById("errorExecutor").value = "";
       document.getElementById("errorType").value     = "";
       document.getElementById("details").value       = "";
@@ -820,6 +836,7 @@
       const requestDate   = document.getElementById("requestDate").value;
       const store         = document.getElementById("store").value;
       const orderNumber   = document.getElementById("orderNumber").value.trim();
+      const productCode   = document.getElementById("productCode").value.trim(); // ✅
       const errorExecutor = document.getElementById("errorExecutor").value.trim();
       const errorType     = document.getElementById("errorType").value;
       const recordedBy    = document.getElementById("recordedBy").value.trim();
@@ -843,6 +860,7 @@
             requestDate: requestDate || null,
             store: store,
             orderNumber: orderNumber,
+            productCode: productCode, // ✅
             errorExecutor: errorExecutor,
             errorType: errorType,
             details: details,
@@ -856,6 +874,7 @@
             requestDate: requestDate || null,
             store: store,
             orderNumber: orderNumber,
+            productCode: productCode, // ✅
             errorExecutor: errorExecutor,
             errorType: errorType,
             details: details,
@@ -912,7 +931,8 @@
         store:         filterStore.value      || null,
         errorType:     filterErrorType.value || null,
         errorExecutor: filterExecutor.value  || null,
-        recordedBy:    filterRecordedBy.value|| null
+        recordedBy:    filterRecordedBy.value|| null,
+        productCode:   filterProductCode.value || null // ✅
       };
 
       try {
@@ -944,6 +964,7 @@
         if (filters.errorType)     filtersMap.push({ label: "نوع الخطأ",  value: filters.errorType });
         if (filters.errorExecutor) filtersMap.push({ label: "منفذ الخطأ", value: filters.errorExecutor });
         if (filters.recordedBy)    filtersMap.push({ label: "سجل الخطأ",  value: filters.recordedBy });
+        if (filters.productCode)   filtersMap.push({ label: "كود المنتج", value: filters.productCode }); // ✅
 
         filtersMap.forEach(function(f) {
           const chip = document.createElement("span");
@@ -954,7 +975,7 @@
 
         if (rows.length === 0) {
           reportTableBody.innerHTML =
-            '<tr><td colspan="10" style="text-align:center; padding:10px; color:#6b7280;">لا توجد بيانات مطابقة للفلاتر الحالية.</td></tr>';
+            '<tr><td colspan="11" style="text-align:center; padding:10px; color:#6b7280;">لا توجد بيانات مطابقة للفلاتر الحالية.</td></tr>';
         } else {
           const frag = document.createDocumentFragment();
           rows.forEach(function(r) {
@@ -972,6 +993,7 @@
               "<td>" + (r.MonthKey || "") + "</td>" +
               "<td>" + (r.Store || "") + "</td>" +
               "<td>" + (r.OrderNumber || "") + "</td>" +
+              "<td>" + (r.ProductCode || "") + "</td>" + // ✅ عرض كود المنتج
               "<td>" + (r.ErrorExecutor || "") + "</td>" +
               "<td>" + (r.ErrorType || "") + "</td>" +
               "<td>" + (r.Details || "") + "</td>" +
@@ -1090,6 +1112,7 @@
       filterErrorType.value  = "";
       filterExecutor.value   = "";
       filterRecordedBy.value = "";
+      filterProductCode.value = ""; // ✅
       loadReport(true);
     });
 
