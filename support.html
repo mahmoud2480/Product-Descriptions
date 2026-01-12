@@ -466,7 +466,7 @@
             </button>
           </div>
           <p class="small-note">
-          <b>SupportErrors</b>.
+            يتم التخزين في ورقة <b>SupportErrors</b>.
           </p>
         </div>
 
@@ -819,6 +819,12 @@
       document.getElementById("errorType").value     = row.ErrorType || "";
       document.getElementById("details").value       = row.Details || "";
 
+      // ⭐ مهم: إعادة تعبئة حقل "الموظف الذي سجل الخطأ" من السجل
+      const recInput = document.getElementById("recordedBy");
+      if (recInput) {
+        recInput.value = row.RecordedBy || recInput.value || "";
+      }
+
       btnSave.textContent = "💾 تحديث الخطأ";
       setFormStatus("وضع التعديل مفعل. عند الحفظ سيتم تحديث هذا السجل.", "info");
     }
@@ -830,6 +836,7 @@
       document.getElementById("errorExecutor").value = "";
       document.getElementById("errorType").value     = "";
       document.getElementById("details").value       = "";
+      // لا نفرغ recordedBy لأنه يعكس المستخدم الحالي
     }
 
     function exitEditMode() {
@@ -954,7 +961,7 @@
         }
 
         const rows       = data.rows || [];
-        const total      = data.total || rows.length || 0;
+        const total      = (typeof data.total === "number") ? data.total : (rows.length || 0);
         const byExecutor = data.byExecutor || [];
         const byType     = data.byType || [];
 
@@ -1067,18 +1074,26 @@
           reportTableBody.appendChild(frag);
         }
 
+        // ⭐ حماية في حال الـ API لا يرجّع percentFrom100
+        const totalForPct = total || rows.length || 0;
+
         if (!byExecutor.length) {
           byExecutorBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
         } else {
           const fragExec = document.createDocumentFragment();
           byExecutor.forEach(item => {
+            const count = item.count || 0;
+            const pct = (typeof item.percentFrom100 === "number")
+              ? item.percentFrom100
+              : (totalForPct ? (count * 100) / totalForPct : 0);
+
             const div = document.createElement("div");
             div.className = "summary-row";
             div.innerHTML = `
               <span class="summary-name">${item.name}</span>
               <span>
-                <span class="summary-count">${item.count}</span>
-                <span class="summary-percent">(${item.percentFrom100.toFixed(1)}%)</span>
+                <span class="summary-count">${count}</span>
+                <span class="summary-percent">(${pct.toFixed(1)}%)</span>
               </span>`;
             fragExec.appendChild(div);
           });
@@ -1090,13 +1105,18 @@
         } else {
           const fragType = document.createDocumentFragment();
           byType.forEach(item => {
+            const count = item.count || 0;
+            const pct = (typeof item.percentFrom100 === "number")
+              ? item.percentFrom100
+              : (totalForPct ? (count * 100) / totalForPct : 0);
+
             const div = document.createElement("div");
             div.className = "summary-row";
             div.innerHTML = `
               <span class="summary-name">${item.type}</span>
               <span>
-                <span class="summary-count">${item.count}</span>
-                <span class="summary-percent">(${item.percentFrom100.toFixed(1)}%)</span>
+                <span class="summary-count">${count}</span>
+                <span class="summary-percent">(${pct.toFixed(1)}%)</span>
               </span>`;
             fragType.appendChild(div);
           });
@@ -1128,6 +1148,7 @@
       const u = loadUserFromStorage();
       if (!u) return;
 
+      // صلاحية الدخول للصفحة
       if (!hasRole("SUPPORT") && !hasRole("ADMIN") && !hasRole("AUDITOR_EXTENDED")) {
         window.location.href = "employee.html";
         return;
