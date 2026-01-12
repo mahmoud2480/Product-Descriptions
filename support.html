@@ -39,6 +39,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     header h1 {
@@ -50,6 +51,21 @@
       margin: 0;
       font-size: 0.85rem;
       opacity: 0.9;
+    }
+
+    .nav-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      font-size: 0.8rem;
+    }
+
+    .user-pill {
+      background: rgba(255,255,255,0.12);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
     }
 
     .nav-buttons {
@@ -161,7 +177,7 @@
     input:focus,
     select:focus,
     textarea:focus {
-      border-color: var(--primary);
+      border-color: --primary;
       box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
       background: #fff;
     }
@@ -348,10 +364,12 @@
         <h1>نظام الدعم الفني - أخطاء الطلبات</h1>
         <p class="subtitle">تسجيل أخطاء الطلبات وتحليلها حسب الموظفين ونوع الخطأ</p>
       </div>
-      <!-- يمكنك تعديل الرابط حسب نظامك -->
-      <a href="index.html" style="color:#fff; font-size:0.8rem; text-decoration:none;">
-        ⬅ العودة للنظام
-      </a>
+      <div class="nav-right">
+        <a href="index.html" style="color:#fff; font-size:0.8rem; text-decoration:none;">
+          ⬅ العودة للنظام
+        </a>
+        <div class="user-pill" id="empInfo"></div>
+      </div>
     </div>
 
     <div class="nav-buttons">
@@ -523,6 +541,15 @@
   </main>
 
   <script>
+    // 🛡️ حماية الصفحة حسب الدور
+    const EMP = JSON.parse(localStorage.getItem("employeeData") || "{}");
+    const ALLOWED_ROLES = ["Admin", "AUDITOR", "Support","EVALUATOR"];
+
+    if (!EMP || !EMP.role || !ALLOWED_ROLES.includes(EMP.role)) {
+      alert("🚫 ليس لديك صلاحية الوصول إلى صفحة الدعم الفني.");
+      window.location.href = "login.html"; // عدلها حسب اسم صفحة تسجيل الدخول عندك
+    }
+
     // ✅ غيّر هذا الرابط إلى رابط الـ Web App الخاص بالسكربت
     const API_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
 
@@ -544,6 +571,7 @@
     const reportTableBody = document.getElementById("reportTableBody");
     const byExecutorBox = document.getElementById("byExecutorBox");
     const byTypeBox = document.getElementById("byTypeBox");
+    const empInfo = document.getElementById("empInfo");
 
     function setFormStatus(message, type) {
       if (!message) {
@@ -633,10 +661,7 @@
         const data = await res.json();
         if (data && data.success) {
           setFormStatus("تم حفظ الخطأ بنجاح ✅", "ok");
-          // تفريغ بعض الحقول فقط (يمكنك تعديل السلوك)
-          // document.getElementById("orderNumber").value = "";
           document.getElementById("details").value = "";
-          // بعد الحفظ، نحدّث التقرير مباشرة
           loadReport(false);
         } else {
           console.error(data);
@@ -651,7 +676,18 @@
     });
 
     btnResetForm.addEventListener("click", () => {
-      form.reset();
+      const orderNumber = document.getElementById("orderNumber");
+      const errorExecutor = document.getElementById("errorExecutor");
+      const details = document.getElementById("details");
+      const store = document.getElementById("store");
+      const errorType = document.getElementById("errorType");
+
+      // نعيد فقط الحقول المرتبطة بالخطأ ونحافظ على recordedBy
+      orderNumber.value = "";
+      errorExecutor.value = "";
+      details.value = "";
+      store.value = "";
+      errorType.value = "";
       setFormStatus("", "info");
     });
 
@@ -663,10 +699,9 @@
       byTypeBox.innerHTML = "";
       reportChips.innerHTML = "";
 
-      // monthKey مثل 2026-01
       let monthKey = "";
       if (filterMonth.value) {
-        monthKey = filterMonth.value; // نفس الشكل المطلوب
+        monthKey = filterMonth.value;
       }
 
       const filters = {
@@ -699,13 +734,11 @@
         const byExecutor = data.byExecutor || [];
         const byType = data.byType || [];
 
-        // شريحة العدد الإجمالي
         const totalChip = document.createElement("span");
         totalChip.className = "chip total";
         totalChip.textContent = `إجمالي الأخطاء: ${total}`;
         reportChips.appendChild(totalChip);
 
-        // إضافة شرائح للفلاتر النشطة
         const filtersMap = [];
 
         if (monthKey) filtersMap.push({ label: "الشهر", value: monthKey });
@@ -721,7 +754,6 @@
           reportChips.appendChild(chip);
         });
 
-        // تعبئة جدول التفاصيل
         if (rows.length === 0) {
           reportTableBody.innerHTML = `
             <tr>
@@ -750,7 +782,6 @@
           reportTableBody.appendChild(frag);
         }
 
-        // تجميع حسب منفذ الخطأ
         if (byExecutor.length === 0) {
           byExecutorBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
         } else {
@@ -770,7 +801,6 @@
           byExecutorBox.appendChild(fragExec);
         }
 
-        // تجميع حسب نوع الخطأ
         if (byType.length === 0) {
           byTypeBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
         } else {
@@ -808,13 +838,31 @@
       loadReport(true);
     });
 
-    // تحميل تقرير الشهر الحالي عند فتح الصفحة
+    // تحميل تقرير الشهر الحالي عند فتح الصفحة + تهيئة بيانات الموظف
     window.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, "0");
       filterMonth.value = `${y}-${m}`;
       loadReport(false);
+
+      // عرض اسم/كود الموظف في الهيدر
+      if (empInfo && (EMP.employeeCode || EMP.name)) {
+        empInfo.textContent = `المستخدم: ${
+          EMP.employeeCode ? EMP.employeeCode + " - " : ""
+        }${EMP.name || ""} (${EMP.role || ""})`;
+      }
+
+      // تعبئة حقل "الموظف الذي سجل الخطأ" تلقائياً
+      const recInput = document.getElementById("recordedBy");
+      if (recInput && (EMP.employeeCode || EMP.name)) {
+        recInput.value = `${
+          EMP.employeeCode ? EMP.employeeCode : ""
+        }${EMP.employeeCode && EMP.name ? " - " : ""}${
+          EMP.name ? EMP.name : ""
+        }`;
+        recInput.readOnly = true;
+      }
     });
   </script>
 </body>
