@@ -5,6 +5,10 @@
   <title>نظام الدعم الفني - جي ستور</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- لو حبيت تتخلص من خطأ الـ favicon، ضع أي صورة صغيرة بهذا الاسم بجانب الملف -->
+  <!-- أو غيّر المسار هنا إلى أيقونة موجودة فعلاً -->
+  <link rel="icon" type="image/png" href="favicon.png" />
+
   <style>
     :root {
       --primary: #0d6efd;
@@ -73,10 +77,6 @@
       flex-wrap: wrap;
       gap: 6px;
       margin-top: 6px;
-    }
-
-    .nav-buttons a {
-      text-decoration: none;
     }
 
     .nav-buttons button {
@@ -269,15 +269,6 @@
       background: #f9fafb;
     }
 
-    .badge {
-      display: inline-flex;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      background: #eef2ff;
-      color: #3730a3;
-    }
-
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -371,7 +362,6 @@
     .table-actions-btn.delete-btn {
       color: #b91c1c;
     }
-
   </style>
 </head>
 <body>
@@ -389,17 +379,15 @@
       </div>
     </div>
 
-    <!-- 🔹 شريط الأزرار الموحد لكل الواجهات -->
     <div class="nav-buttons" id="navButtons"></div>
   </header>
 
   <main>
-    <!-- 🔹 بطاقة تسجيل خطأ جديد / تعديل -->
+    <!-- بطاقة تسجيل خطأ -->
     <section class="card">
       <h2><span class="icon">📝</span>تسجيل خطأ جديد</h2>
 
       <form id="errorForm">
-        <!-- مخفي: مفتاح التعديل -->
         <input type="hidden" id="editKey" />
 
         <div class="form-grid">
@@ -474,11 +462,10 @@
       </form>
     </section>
 
-    <!-- 🔹 بطاقة الفلاتر والتقرير -->
+    <!-- بطاقة التقرير -->
     <section class="card">
       <h2><span class="icon">📊</span>تقرير أخطاء الدعم الفني</h2>
 
-      <!-- فلاتر التقرير -->
       <div class="form-grid-2" style="margin-bottom:10px;">
         <div>
           <label for="filterMonth">الشهر</label>
@@ -530,12 +517,8 @@
 
       <div class="inline" style="justify-content: space-between; margin-bottom:8px;">
         <div class="inline" style="gap:6px;">
-          <button type="button" class="btn btn-primary" id="btnLoadReport">
-            🔍 عرض التقرير
-          </button>
-          <button type="button" class="btn btn-secondary" id="btnClearFilters">
-            ♻ تصفير الفلاتر
-          </button>
+          <button type="button" class="btn btn-primary" id="btnLoadReport">🔍 عرض التقرير</button>
+          <button type="button" class="btn btn-secondary" id="btnClearFilters">♻ تصفير الفلاتر</button>
         </div>
 
         <div class="chips-row" id="reportChips"></div>
@@ -543,7 +526,6 @@
 
       <div class="status-bar" id="reportStatus"></div>
 
-      <!-- ملخصات -->
       <div class="summary-grid">
         <div class="summary-box">
           <h3>👤 حسب منفذ الخطأ</h3>
@@ -556,7 +538,6 @@
         </div>
       </div>
 
-      <!-- جدول التفاصيل -->
       <div style="margin-top:12px; overflow:auto;">
         <table>
           <thead>
@@ -589,13 +570,11 @@
       if (!API_URL) {
         throw new Error("API_URL غير معرّف. تأكد من ملف config.js");
       }
-
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action, payload })
+        body: JSON.stringify({ action: action, payload: payload })
       });
-
       const txt = await res.text();
       try {
         return JSON.parse(txt);
@@ -608,17 +587,8 @@
     let user = null;
     let lastReportRows = [];
 
-    function logout() {
-      localStorage.removeItem("taskUser");
-      localStorage.removeItem("employeeData");
-      window.location.href = "index.html";
-    }
-
     function loadUserFromStorage() {
-      const str =
-        localStorage.getItem("taskUser") ||
-        localStorage.getItem("employeeData");
-
+      const str = localStorage.getItem("taskUser") || localStorage.getItem("employeeData");
       if (!str) {
         window.location.href = "index.html";
         return null;
@@ -629,22 +599,20 @@
 
     function hasRole(code) {
       if (!user || !user.role) return false;
-
-      const rolesTextUpper = user.role.toString().toUpperCase();
-      const rolesTextRaw   = user.role.toString();
+      const rolesTextUpper = String(user.role).toUpperCase();
+      const rolesTextRaw   = String(user.role);
 
       if (code === "AUDITOR_EXTENDED") {
         return (
-          rolesTextUpper.includes("AUDITOR") ||
-          rolesTextUpper.includes("ADMIN")   ||
-          rolesTextUpper.includes("MANAGER") ||
-          rolesTextRaw.includes("مدير")     ||
-          rolesTextRaw.includes("رئيس قسم") ||
-          rolesTextRaw.includes("مدقق")
+          rolesTextUpper.indexOf("AUDITOR") !== -1 ||
+          rolesTextUpper.indexOf("ADMIN")   !== -1 ||
+          rolesTextUpper.indexOf("MANAGER") !== -1 ||
+          rolesTextRaw.indexOf("مدير")      !== -1 ||
+          rolesTextRaw.indexOf("رئيس قسم")  !== -1 ||
+          rolesTextRaw.indexOf("مدقق")      !== -1
         );
       }
-
-      return rolesTextUpper.includes(code);
+      return rolesTextUpper.indexOf(code) !== -1;
     }
 
     function renderNav(activeHref) {
@@ -664,12 +632,12 @@
         { code: "SUPPORT",          label: "الدعم الفني",     href: "support.html" }
       ];
 
-      links.forEach(item => {
+      links.forEach(function(item) {
         if (!hasRole(item.code)) return;
         const btn = document.createElement("button");
         btn.textContent = item.label;
         if (activeHref === item.href) btn.classList.add("active");
-        btn.onclick = () => {
+        btn.onclick = function() {
           if (!window.location.pathname.endsWith(item.href)) {
             window.location.href = item.href;
           }
@@ -703,10 +671,10 @@
         formStatus.innerHTML = "";
         return;
       }
-      let cls = "info";
+      var cls = "info";
       if (type === "ok") cls = "ok";
       if (type === "error") cls = "error";
-      formStatus.innerHTML = `<span class="${cls}">${message}</span>`;
+      formStatus.innerHTML = '<span class="' + cls + '">' + message + '</span>';
     }
 
     function setReportStatus(message, type) {
@@ -714,59 +682,59 @@
         reportStatus.innerHTML = "";
         return;
       }
-      let cls = "info";
+      var cls = "info";
       if (type === "ok") cls = "ok";
       if (type === "error") cls = "error";
-      reportStatus.innerHTML = `<span class="${cls}">${message}</span>`;
+      reportStatus.innerHTML = '<span class="' + cls + '">' + message + '</span>';
     }
 
     function formatDateShort(iso) {
       if (!iso) return "";
-      const d = new Date(iso);
+      var d = new Date(iso);
       if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}/${m}/${day}`;
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      return y + "/" + m + "/" + day;
     }
 
     function formatDateTime(iso) {
       if (!iso) return "";
-      const d = new Date(iso);
+      var d = new Date(iso);
       if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      return `${y}/${m}/${day} - ${hh}:${mm}`;
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      return y + "/" + m + "/" + day + " - " + hh + ":" + mm;
     }
 
     function isoToInputDate(iso) {
       if (!iso) return "";
-      const d = new Date(iso);
+      var d = new Date(iso);
       if (isNaN(d.getTime())) return "";
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      return y + "-" + m + "-" + day;
     }
 
     function updateDynamicFilterOptions(rows) {
-      const execPrev = filterExecutor.value || "";
-      const recPrev  = filterRecordedBy.value || "";
+      var execPrev = filterExecutor.value || "";
+      var recPrev  = filterRecordedBy.value || "";
 
-      const execSet = new Set();
-      const recSet  = new Set();
+      var execSet = new Set();
+      var recSet  = new Set();
 
-      rows.forEach(r => {
+      rows.forEach(function(r) {
         if (r.ErrorExecutor) execSet.add(r.ErrorExecutor);
         if (r.RecordedBy)    recSet.add(r.RecordedBy);
       });
 
-      filterExecutor.innerHTML = `<option value="">الكل</option>`;
-      Array.from(execSet).sort().forEach(val => {
-        const opt = document.createElement("option");
+      filterExecutor.innerHTML = '<option value="">الكل</option>';
+      Array.from(execSet).sort().forEach(function(val) {
+        var opt = document.createElement("option");
         opt.value = val;
         opt.textContent = val;
         filterExecutor.appendChild(opt);
@@ -775,9 +743,9 @@
         filterExecutor.value = execPrev;
       }
 
-      filterRecordedBy.innerHTML = `<option value="">الكل</option>`;
-      Array.from(recSet).sort().forEach(val => {
-        const opt = document.createElement("option");
+      filterRecordedBy.innerHTML = '<option value="">الكل</option>';
+      Array.from(recSet).sort().forEach(function(val) {
+        var opt = document.createElement("option");
         opt.value = val;
         opt.textContent = val;
         filterRecordedBy.appendChild(opt);
@@ -789,19 +757,19 @@
 
     function canUserEdit(row) {
       if (!user) return false;
-      const roleStr = (user.role || '').toString();
-      const ru = roleStr.toUpperCase();
+      var roleStr = String(user.role || "");
+      var ru = roleStr.toUpperCase();
 
-      const isAdminRole =
-        ru.includes('ADMIN') ||
-        ru.includes('SUPPORT') ||
-        ru.includes('MANAGER') ||
-        roleStr.indexOf('مدير') !== -1 ||
-        roleStr.indexOf('رئيس قسم') !== -1;
+      var isAdminRole =
+        ru.indexOf("ADMIN")   !== -1 ||
+        ru.indexOf("SUPPORT") !== -1 ||
+        ru.indexOf("MANAGER") !== -1 ||
+        roleStr.indexOf("مدير")      !== -1 ||
+        roleStr.indexOf("رئيس قسم")  !== -1;
 
       if (isAdminRole) return true;
 
-      const rec = (row.RecordedBy || '').toString();
+      var rec = String(row.RecordedBy || "");
       if (user.employeeCode && rec.indexOf(user.employeeCode) !== -1) return true;
       if (user.name && rec.indexOf(user.name) !== -1) return true;
 
@@ -819,8 +787,7 @@
       document.getElementById("errorType").value     = row.ErrorType || "";
       document.getElementById("details").value       = row.Details || "";
 
-      // ⭐ مهم: إعادة تعبئة حقل "الموظف الذي سجل الخطأ" من السجل
-      const recInput = document.getElementById("recordedBy");
+      var recInput = document.getElementById("recordedBy");
       if (recInput) {
         recInput.value = row.RecordedBy || recInput.value || "";
       }
@@ -846,7 +813,7 @@
       resetFormFields();
     }
 
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async function(e) {
       e.preventDefault();
       setFormStatus("", "info");
 
@@ -874,12 +841,12 @@
           data = await callApi("updateSupportError", {
             keyTimestamp: editKeyInput.value,
             requestDate: requestDate || null,
-            store,
-            orderNumber,
-            errorExecutor,
-            errorType,
-            details,
-            recordedBy,
+            store: store,
+            orderNumber: orderNumber,
+            errorExecutor: errorExecutor,
+            errorType: errorType,
+            details: details,
+            recordedBy: recordedBy,
             currentUserCode: user ? user.employeeCode : "",
             currentUserName: user ? user.name : "",
             currentUserRole: user ? user.role : ""
@@ -887,12 +854,12 @@
         } else {
           data = await callApi("addSupportError", {
             requestDate: requestDate || null,
-            store,
-            orderNumber,
-            errorExecutor,
-            errorType,
-            details,
-            recordedBy
+            store: store,
+            orderNumber: orderNumber,
+            errorExecutor: errorExecutor,
+            errorType: errorType,
+            details: details,
+            recordedBy: recordedBy
           });
         }
 
@@ -901,21 +868,17 @@
             isEdit ? "تم تحديث السجل بنجاح ✅" : "تم حفظ الخطأ بنجاح ✅",
             "ok"
           );
-
           if (isEdit) {
             exitEditMode();
           } else {
             resetFormFields();
           }
-
           document.getElementById("details").value = "";
           loadReport(false);
         } else {
           console.error(data);
           setFormStatus(
-            data && data.message
-              ? data.message
-              : "حدث خطأ أثناء الحفظ. حاول مرة أخرى.",
+            data && data.message ? data.message : "حدث خطأ أثناء الحفظ. حاول مرة أخرى.",
             "error"
           );
         }
@@ -927,11 +890,12 @@
       }
     });
 
-    btnResetForm.addEventListener("click", () => {
+    btnResetForm.addEventListener("click", function() {
       exitEditMode();
     });
 
-    async function loadReport(showMessage = true) {
+    async function loadReport(showMessage) {
+      if (showMessage === undefined) showMessage = true;
       setReportStatus(showMessage ? "جاري تحميل التقرير..." : "", "info");
       reportTableBody.innerHTML = "";
       byExecutorBox.innerHTML = "";
@@ -944,7 +908,7 @@
       }
 
       const filters = {
-        monthKey,
+        monthKey: monthKey,
         store:         filterStore.value      || null,
         errorType:     filterErrorType.value || null,
         errorExecutor: filterExecutor.value  || null,
@@ -952,7 +916,7 @@
       };
 
       try {
-        const data = await callApi("getSupportErrors", { filters });
+        const data = await callApi("getSupportErrors", { filters: filters });
 
         if (!data || !data.success) {
           console.error(data);
@@ -961,7 +925,7 @@
         }
 
         const rows       = data.rows || [];
-        const total      = (typeof data.total === "number") ? data.total : (rows.length || 0);
+        const total      = typeof data.total === "number" ? data.total : (rows.length || 0);
         const byExecutor = data.byExecutor || [];
         const byType     = data.byType || [];
 
@@ -971,7 +935,7 @@
 
         const totalChip = document.createElement("span");
         totalChip.className = "chip total";
-        totalChip.textContent = `إجمالي الأخطاء: ${total}`;
+        totalChip.textContent = "إجمالي الأخطاء: " + total;
         reportChips.appendChild(totalChip);
 
         const filtersMap = [];
@@ -981,63 +945,55 @@
         if (filters.errorExecutor) filtersMap.push({ label: "منفذ الخطأ", value: filters.errorExecutor });
         if (filters.recordedBy)    filtersMap.push({ label: "سجل الخطأ",  value: filters.recordedBy });
 
-        filtersMap.forEach(f => {
+        filtersMap.forEach(function(f) {
           const chip = document.createElement("span");
           chip.className = "chip";
-          chip.textContent = `${f.label}: ${f.value}`;
+          chip.textContent = f.label + ": " + f.value;
           reportChips.appendChild(chip);
         });
 
         if (rows.length === 0) {
-          reportTableBody.innerHTML = `
-            <tr>
-              <td colspan="10" style="text-align:center; padding:10px; color:#6b7280;">
-                لا توجد بيانات مطابقة للفلاتر الحالية.
-              </td>
-            </tr>`;
+          reportTableBody.innerHTML =
+            '<tr><td colspan="10" style="text-align:center; padding:10px; color:#6b7280;">لا توجد بيانات مطابقة للفلاتر الحالية.</td></tr>';
         } else {
           const frag = document.createDocumentFragment();
-          rows.forEach(r => {
+          rows.forEach(function(r) {
             const tr = document.createElement("tr");
-
             const canEditRow = canUserEdit(r);
             let actionsHtml = "";
             if (canEditRow) {
-              actionsHtml = `
-                <button type="button" class="table-actions-btn edit-btn">✏ تعديل</button>
-                <button type="button" class="table-actions-btn delete-btn">🗑 حذف</button>
-              `;
+              actionsHtml =
+                '<button type="button" class="table-actions-btn edit-btn">✏ تعديل</button>' +
+                '<button type="button" class="table-actions-btn delete-btn">🗑 حذف</button>';
             }
 
-            tr.innerHTML = `
-              <td>${formatDateShort(r.RequestDate)}</td>
-              <td>${r.MonthKey || ""}</td>
-              <td>${r.Store || ""}</td>
-              <td>${r.OrderNumber || ""}</td>
-              <td>${r.ErrorExecutor || ""}</td>
-              <td>${r.ErrorType || ""}</td>
-              <td>${r.Details || ""}</td>
-              <td>${r.RecordedBy || ""}</td>
-              <td>${formatDateTime(r.Timestamp)}</td>
-              <td>${actionsHtml}</td>
-            `;
+            tr.innerHTML =
+              "<td>" + formatDateShort(r.RequestDate) + "</td>" +
+              "<td>" + (r.MonthKey || "") + "</td>" +
+              "<td>" + (r.Store || "") + "</td>" +
+              "<td>" + (r.OrderNumber || "") + "</td>" +
+              "<td>" + (r.ErrorExecutor || "") + "</td>" +
+              "<td>" + (r.ErrorType || "") + "</td>" +
+              "<td>" + (r.Details || "") + "</td>" +
+              "<td>" + (r.RecordedBy || "") + "</td>" +
+              "<td>" + formatDateTime(r.Timestamp) + "</td>" +
+              "<td>" + actionsHtml + "</td>";
 
             if (canEditRow) {
               const editBtn = tr.querySelector(".edit-btn");
               const delBtn  = tr.querySelector(".delete-btn");
 
               if (editBtn) {
-                editBtn.addEventListener("click", () => {
+                editBtn.addEventListener("click", function() {
                   enterEditMode(r);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 });
               }
 
               if (delBtn) {
-                delBtn.addEventListener("click", async () => {
+                delBtn.addEventListener("click", async function() {
                   const ok = confirm("هل تريد بالتأكيد حذف هذا السجل؟");
                   if (!ok) return;
-
                   try {
                     setReportStatus("جاري حذف السجل...", "info");
                     const resp = await callApi("deleteSupportError", {
@@ -1046,14 +1002,11 @@
                       currentUserName: user ? user.name : "",
                       currentUserRole: user ? user.role : ""
                     });
-
                     if (resp && resp.success) {
                       setReportStatus("تم حذف السجل بنجاح.", "ok");
-
                       if (editKeyInput.value === r.Timestamp) {
                         exitEditMode();
                       }
-
                       loadReport(false);
                     } else {
                       setReportStatus(
@@ -1074,68 +1027,64 @@
           reportTableBody.appendChild(frag);
         }
 
-        // ⭐ حماية في حال الـ API لا يرجّع percentFrom100
         const totalForPct = total || rows.length || 0;
 
         if (!byExecutor.length) {
-          byExecutorBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
+          byExecutorBox.innerHTML = '<p class="small-note">لا يوجد تجميع متاح.</p>';
         } else {
           const fragExec = document.createDocumentFragment();
-          byExecutor.forEach(item => {
+          byExecutor.forEach(function(item) {
             const count = item.count || 0;
-            const pct = (typeof item.percentFrom100 === "number")
+            const pct = typeof item.percentFrom100 === "number"
               ? item.percentFrom100
               : (totalForPct ? (count * 100) / totalForPct : 0);
 
             const div = document.createElement("div");
             div.className = "summary-row";
-            div.innerHTML = `
-              <span class="summary-name">${item.name}</span>
-              <span>
-                <span class="summary-count">${count}</span>
-                <span class="summary-percent">(${pct.toFixed(1)}%)</span>
-              </span>`;
+            div.innerHTML =
+              '<span class="summary-name">' + item.name + '</span>' +
+              '<span>' +
+              '<span class="summary-count">' + count + '</span> ' +
+              '<span class="summary-percent">(' + pct.toFixed(1) + '%)</span>' +
+              '</span>';
             fragExec.appendChild(div);
           });
           byExecutorBox.appendChild(fragExec);
         }
 
         if (!byType.length) {
-          byTypeBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
+          byTypeBox.innerHTML = '<p class="small-note">لا يوجد تجميع متاح.</p>';
         } else {
           const fragType = document.createDocumentFragment();
-          byType.forEach(item => {
+          byType.forEach(function(item) {
             const count = item.count || 0;
-            const pct = (typeof item.percentFrom100 === "number")
+            const pct = typeof item.percentFrom100 === "number"
               ? item.percentFrom100
               : (totalForPct ? (count * 100) / totalForPct : 0);
 
             const div = document.createElement("div");
             div.className = "summary-row";
-            div.innerHTML = `
-              <span class="summary-name">${item.type}</span>
-              <span>
-                <span class="summary-count">${count}</span>
-                <span class="summary-percent">(${pct.toFixed(1)}%)</span>
-              </span>`;
+            div.innerHTML =
+              '<span class="summary-name">' + item.type + '</span>' +
+              '<span>' +
+              '<span class="summary-count">' + count + '</span> ' +
+              '<span class="summary-percent">(' + pct.toFixed(1) + '%)</span>' +
+              '</span>';
             fragType.appendChild(div);
           });
           byTypeBox.appendChild(fragType);
         }
 
-        setReportStatus(`تم تحميل التقرير بنجاح. عدد السجلات: ${total}`, "ok");
+        setReportStatus("تم تحميل التقرير بنجاح. عدد السجلات: " + total, "ok");
       } catch (err) {
         console.error(err);
-        setReportStatus(
-          "تعذر الاتصال بالسيرفر. تأكد من رابط API.",
-          "error"
-        );
+        setReportStatus("تعذر الاتصال بالسيرفر. تأكد من رابط API.", "error");
       }
     }
 
-    btnLoadReport.addEventListener("click", () => loadReport(true));
+    btnLoadReport.addEventListener("click", function() { loadReport(true); });
 
-    btnClearFilters.addEventListener("click", () => {
+    btnClearFilters.addEventListener("click", function() {
       filterMonth.value      = "";
       filterStore.value      = "";
       filterErrorType.value  = "";
@@ -1144,40 +1093,41 @@
       loadReport(true);
     });
 
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("DOMContentLoaded", function() {
       const u = loadUserFromStorage();
       if (!u) return;
 
-      // صلاحية الدخول للصفحة
       if (!hasRole("SUPPORT") && !hasRole("ADMIN") && !hasRole("AUDITOR_EXTENDED")) {
         window.location.href = "employee.html";
         return;
       }
 
       if (empInfo && (u.employeeCode || u.name)) {
-        empInfo.textContent = `المستخدم: ${
-          u.employeeCode ? u.employeeCode + " - " : ""
-        }${u.name || ""} (${u.role || ""})`;
+        let txt = "المستخدم: ";
+        if (u.employeeCode) txt += u.employeeCode + " - ";
+        if (u.name) txt += u.name;
+        txt += " (" + (u.role || "") + ")";
+        empInfo.textContent = txt;
       }
 
       const recInput = document.getElementById("recordedBy");
       if (recInput && (u.employeeCode || u.name)) {
-        recInput.value =
-          (u.employeeCode ? u.employeeCode : "") +
-          (u.employeeCode && u.name ? " - " : "") +
-          (u.name ? u.name : "");
+        let v = "";
+        if (u.employeeCode) v += u.employeeCode;
+        if (u.employeeCode && u.name) v += " - ";
+        if (u.name) v += u.name;
+        recInput.value = v;
         recInput.readOnly = true;
       }
 
       const now = new Date();
       const y   = now.getFullYear();
       const m   = String(now.getMonth() + 1).padStart(2, "0");
-      filterMonth.value = `${y}-${m}`;
+      filterMonth.value = y + "-" + m;
 
       renderNav("support.html");
       loadReport(false);
     });
   </script>
-
 </body>
 </html>
