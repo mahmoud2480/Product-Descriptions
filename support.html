@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>نظام الدعم الفني - جي ستور</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --primary-dark: #0a58ca;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Cairo", system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #222;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      padding: 12px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    header .subtitle {
+      margin: 0;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .nav-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .nav-buttons a {
+      text-decoration: none;
+    }
+
+    .nav-buttons button {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .nav-buttons button.primary {
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 16px auto;
+      padding: 0 10px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      padding: 12px 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card h2 span.icon {
+      font-size: 1.1rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .form-grid,
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: #444;
+    }
+
+    input[type="date"],
+    input[type="text"],
+    input[type="month"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 7px 8px;
+      border-radius: 10px;
+      border: 1px solid #d0d7e2;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f9fbff;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+      background: #fff;
+    }
+
+    .inline {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button.btn {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .small-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .status-bar {
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    .status-bar span {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+    }
+
+    .status-bar .ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-bar .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-bar .info {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    tr:hover td {
+      background: #f9fafb;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .summary-box {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .summary-box h3 {
+      margin: 0 0 6px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      padding: 2px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-name {
+      font-weight: 500;
+    }
+
+    .summary-count {
+      font-weight: 600;
+    }
+
+    .summary-percent {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip {
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .chip.total {
+      background: #dcfce7;
+      color: #166534;
+      font-weight: 600;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>نظام الدعم الفني - أخطاء الطلبات</h1>
+        <p class="subtitle">تسجيل أخطاء الطلبات وتحليلها حسب الموظفين ونوع الخطأ</p>
+      </div>
+      <!-- يمكنك تعديل الرابط حسب نظامك -->
+      <a href="index.html" style="color:#fff; font-size:0.8rem; text-decoration:none;">
+        ⬅ العودة للنظام
+      </a>
+    </div>
+
+    <div class="nav-buttons">
+      <button type="button" class="primary">📌 تسجيل خطأ جديد</button>
+      <button type="button">📊 تقرير الأخطاء</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 🔹 بطاقة تسجيل خطأ جديد -->
+    <section class="card">
+      <h2><span class="icon">📝</span>تسجيل خطأ جديد</h2>
+
+      <form id="errorForm">
+        <div class="form-grid">
+          <div>
+            <label for="requestDate">تاريخ الطلب</label>
+            <input type="date" id="requestDate" name="requestDate" />
+          </div>
+
+          <div>
+            <label for="store">المتجر</label>
+            <select id="store" name="store">
+              <option value="">اختر...</option>
+              <option value="G-Store">G-Store</option>
+              <option value="Rose Store">Rose Store</option>
+              <option value="Jeddo Asim">مطعم جدو عاصم</option>
+              <option value="Other">أخرى</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="orderNumber">رقم الطلب</label>
+            <input type="text" id="orderNumber" name="orderNumber" placeholder="مثال: 123456" />
+          </div>
+
+          <div>
+            <label for="errorExecutor">منفذ الخطأ (اسم أو كود الموظف)</label>
+            <input type="text" id="errorExecutor" name="errorExecutor" placeholder="مثال: A8" />
+          </div>
+
+          <div>
+            <label for="errorType">نوع الخطأ</label>
+            <select id="errorType" name="errorType">
+              <option value="">اختر...</option>
+              <option value="تكويد وتنظيم">تكويد وتنظيم</option>
+              <option value="تجهيز/تغليف">تجهيز/تغليف</option>
+              <option value="شحن وتسليم">شحن وتسليم</option>
+              <option value="إدخال بيانات">إدخال بيانات</option>
+              <option value="خدمة عملاء">خدمة عملاء</option>
+              <option value="أخرى">أخرى</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="recordedBy">الموظف الذي سجل الخطأ</label>
+            <input type="text" id="recordedBy" name="recordedBy" placeholder="مثال: A3 أو الاسم" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="details">التفاصيل</label>
+          <textarea id="details" name="details" placeholder="اكتب وصف مختصر وواضح للخطأ..."></textarea>
+        </div>
+
+        <div class="inline" style="margin-top:10px; justify-content: space-between;">
+          <div class="inline" style="gap:6px;">
+            <button type="submit" class="btn btn-primary" id="btnSave">
+              💾 حفظ الخطأ
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnResetForm">
+              🧹 تفريغ الحقول
+            </button>
+          </div>
+          <p class="small-note">
+            يتم حفظ وقت التسجيل تلقائياً في عمود "طابع زمني" في شيت <b>SupportErrors</b>.
+          </p>
+        </div>
+
+        <div class="status-bar" id="formStatus"></div>
+      </form>
+    </section>
+
+    <!-- 🔹 بطاقة الفلاتر والتقرير -->
+    <section class="card">
+      <h2><span class="icon">📊</span>تقرير أخطاء الدعم الفني</h2>
+
+      <!-- فلاتر التقرير -->
+      <div class="form-grid-2" style="margin-bottom:10px;">
+        <div>
+          <label for="filterMonth">الشهر</label>
+          <input type="month" id="filterMonth" />
+          <p class="small-note">يتم الفلترة حسب "تاريخ الطلب"</p>
+        </div>
+
+        <div>
+          <label for="filterStore">المتجر</label>
+          <input type="text" id="filterStore" placeholder="مثال: G-Store أو تركه فارغاً للكل" />
+        </div>
+
+        <div>
+          <label for="filterErrorType">نوع الخطأ</label>
+          <input type="text" id="filterErrorType" placeholder="مثال: تجهيز/تغليف أو تركه فارغاً" />
+        </div>
+
+        <div>
+          <label for="filterExecutor">منفذ الخطأ</label>
+          <input type="text" id="filterExecutor" placeholder="كود أو اسم الموظف" />
+        </div>
+
+        <div>
+          <label for="filterRecordedBy">الموظف الذي سجل الخطأ</label>
+          <input type="text" id="filterRecordedBy" placeholder="كود أو اسم الموظف" />
+        </div>
+      </div>
+
+      <div class="inline" style="justify-content: space-between; margin-bottom:8px;">
+        <div class="inline" style="gap:6px;">
+          <button type="button" class="btn btn-primary" id="btnLoadReport">
+            🔍 عرض التقرير
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnClearFilters">
+            ♻ تصفير الفلاتر
+          </button>
+        </div>
+
+        <div class="chips-row" id="reportChips">
+          <!-- يتم تعبئته ديناميكياً -->
+        </div>
+      </div>
+
+      <div class="status-bar" id="reportStatus"></div>
+
+      <!-- ملخصات -->
+      <div class="summary-grid">
+        <div class="summary-box">
+          <h3>👤 حسب منفذ الخطأ</h3>
+          <div id="byExecutorBox"></div>
+        </div>
+
+        <div class="summary-box">
+          <h3>⚙ حسب نوع الخطأ</h3>
+          <div id="byTypeBox"></div>
+        </div>
+      </div>
+
+      <!-- جدول التفاصيل -->
+      <div style="margin-top:12px; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>تاريخ الطلب</th>
+              <th>الشهر</th>
+              <th>المتجر</th>
+              <th>رقم الطلب</th>
+              <th>منفذ الخطأ</th>
+              <th>نوع الخطأ</th>
+              <th>التفاصيل</th>
+              <th>الموظف الذي سجل الخطأ</th>
+              <th>وقت التسجيل</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody">
+            <!-- الصفوف هنا -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ✅ غيّر هذا الرابط إلى رابط الـ Web App الخاص بالسكربت
+    const API_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
+
+    const form = document.getElementById("errorForm");
+    const formStatus = document.getElementById("formStatus");
+    const btnSave = document.getElementById("btnSave");
+    const btnResetForm = document.getElementById("btnResetForm");
+
+    const filterMonth = document.getElementById("filterMonth");
+    const filterStore = document.getElementById("filterStore");
+    const filterErrorType = document.getElementById("filterErrorType");
+    const filterExecutor = document.getElementById("filterExecutor");
+    const filterRecordedBy = document.getElementById("filterRecordedBy");
+
+    const btnLoadReport = document.getElementById("btnLoadReport");
+    const btnClearFilters = document.getElementById("btnClearFilters");
+    const reportStatus = document.getElementById("reportStatus");
+    const reportChips = document.getElementById("reportChips");
+    const reportTableBody = document.getElementById("reportTableBody");
+    const byExecutorBox = document.getElementById("byExecutorBox");
+    const byTypeBox = document.getElementById("byTypeBox");
+
+    function setFormStatus(message, type) {
+      if (!message) {
+        formStatus.innerHTML = "";
+        return;
+      }
+      let cls = "info";
+      if (type === "ok") cls = "ok";
+      if (type === "error") cls = "error";
+      formStatus.innerHTML = `<span class="${cls}">${message}</span>`;
+    }
+
+    function setReportStatus(message, type) {
+      if (!message) {
+        reportStatus.innerHTML = "";
+        return;
+      }
+      let cls = "info";
+      if (type === "ok") cls = "ok";
+      if (type === "error") cls = "error";
+      reportStatus.innerHTML = `<span class="${cls}">${message}</span>`;
+    }
+
+    function formatDateShort(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}/${m}/${day}`;
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      return `${y}/${m}/${day} - ${hh}:${mm}`;
+    }
+
+    // 🟦 إرسال خطأ جديد
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setFormStatus("", "info");
+
+      const requestDate = document.getElementById("requestDate").value;
+      const store = document.getElementById("store").value;
+      const orderNumber = document.getElementById("orderNumber").value.trim();
+      const errorExecutor = document.getElementById("errorExecutor").value.trim();
+      const errorType = document.getElementById("errorType").value;
+      const recordedBy = document.getElementById("recordedBy").value.trim();
+      const details = document.getElementById("details").value.trim();
+
+      if (!store || !errorType || !errorExecutor) {
+        setFormStatus("الرجاء تعبئة المتجر + نوع الخطأ + منفذ الخطأ على الأقل.", "error");
+        return;
+      }
+
+      btnSave.disabled = true;
+      setFormStatus("جاري الحفظ...", "info");
+
+      const payload = {
+        requestDate: requestDate || null,
+        store,
+        orderNumber,
+        errorExecutor,
+        errorType,
+        details,
+        recordedBy
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "addSupportError",
+            payload
+          })
+        });
+
+        const data = await res.json();
+        if (data && data.success) {
+          setFormStatus("تم حفظ الخطأ بنجاح ✅", "ok");
+          // تفريغ بعض الحقول فقط (يمكنك تعديل السلوك)
+          // document.getElementById("orderNumber").value = "";
+          document.getElementById("details").value = "";
+          // بعد الحفظ، نحدّث التقرير مباشرة
+          loadReport(false);
+        } else {
+          console.error(data);
+          setFormStatus("حدث خطأ أثناء الحفظ. حاول مرة أخرى.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        setFormStatus("تعذر الاتصال بالسيرفر. تأكد من رابط API.", "error");
+      } finally {
+        btnSave.disabled = false;
+      }
+    });
+
+    btnResetForm.addEventListener("click", () => {
+      form.reset();
+      setFormStatus("", "info");
+    });
+
+    // 🟦 تحميل التقرير
+    async function loadReport(showMessage = true) {
+      setReportStatus(showMessage ? "جاري تحميل التقرير..." : "", "info");
+      reportTableBody.innerHTML = "";
+      byExecutorBox.innerHTML = "";
+      byTypeBox.innerHTML = "";
+      reportChips.innerHTML = "";
+
+      // monthKey مثل 2026-01
+      let monthKey = "";
+      if (filterMonth.value) {
+        monthKey = filterMonth.value; // نفس الشكل المطلوب
+      }
+
+      const filters = {
+        monthKey,
+        store: filterStore.value.trim() || null,
+        errorType: filterErrorType.value.trim() || null,
+        errorExecutor: filterExecutor.value.trim() || null,
+        recordedBy: filterRecordedBy.value.trim() || null
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "getSupportErrors",
+            payload: { filters }
+          })
+        });
+
+        const data = await res.json();
+        if (!data || !data.success) {
+          console.error(data);
+          setReportStatus("حدث خطأ أثناء جلب التقرير.", "error");
+          return;
+        }
+
+        const rows = data.rows || [];
+        const total = data.total || rows.length || 0;
+        const byExecutor = data.byExecutor || [];
+        const byType = data.byType || [];
+
+        // شريحة العدد الإجمالي
+        const totalChip = document.createElement("span");
+        totalChip.className = "chip total";
+        totalChip.textContent = `إجمالي الأخطاء: ${total}`;
+        reportChips.appendChild(totalChip);
+
+        // إضافة شرائح للفلاتر النشطة
+        const filtersMap = [];
+
+        if (monthKey) filtersMap.push({ label: "الشهر", value: monthKey });
+        if (filters.store) filtersMap.push({ label: "المتجر", value: filters.store });
+        if (filters.errorType) filtersMap.push({ label: "نوع الخطأ", value: filters.errorType });
+        if (filters.errorExecutor) filtersMap.push({ label: "منفذ الخطأ", value: filters.errorExecutor });
+        if (filters.recordedBy) filtersMap.push({ label: "سجل الخطأ", value: filters.recordedBy });
+
+        filtersMap.forEach(f => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = `${f.label}: ${f.value}`;
+          reportChips.appendChild(chip);
+        });
+
+        // تعبئة جدول التفاصيل
+        if (rows.length === 0) {
+          reportTableBody.innerHTML = `
+            <tr>
+              <td colspan="9" style="text-align:center; padding:10px; color:#6b7280;">
+                لا توجد بيانات مطابقة للفلاتر الحالية.
+              </td>
+            </tr>
+          `;
+        } else {
+          const frag = document.createDocumentFragment();
+          rows.forEach(r => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${formatDateShort(r.RequestDate)}</td>
+              <td>${r.MonthKey || ""}</td>
+              <td>${r.Store || ""}</td>
+              <td>${r.OrderNumber || ""}</td>
+              <td>${r.ErrorExecutor || ""}</td>
+              <td>${r.ErrorType || ""}</td>
+              <td>${r.Details || ""}</td>
+              <td>${r.RecordedBy || ""}</td>
+              <td>${formatDateTime(r.Timestamp)}</td>
+            `;
+            frag.appendChild(tr);
+          });
+          reportTableBody.appendChild(frag);
+        }
+
+        // تجميع حسب منفذ الخطأ
+        if (byExecutor.length === 0) {
+          byExecutorBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
+        } else {
+          const fragExec = document.createDocumentFragment();
+          byExecutor.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "summary-row";
+            div.innerHTML = `
+              <span class="summary-name">${item.name}</span>
+              <span>
+                <span class="summary-count">${item.count}</span>
+                <span class="summary-percent">(${item.percentFrom100.toFixed(1)}%)</span>
+              </span>
+            `;
+            fragExec.appendChild(div);
+          });
+          byExecutorBox.appendChild(fragExec);
+        }
+
+        // تجميع حسب نوع الخطأ
+        if (byType.length === 0) {
+          byTypeBox.innerHTML = `<p class="small-note">لا يوجد تجميع متاح.</p>`;
+        } else {
+          const fragType = document.createDocumentFragment();
+          byType.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "summary-row";
+            div.innerHTML = `
+              <span class="summary-name">${item.type}</span>
+              <span>
+                <span class="summary-count">${item.count}</span>
+                <span class="summary-percent">(${item.percentFrom100.toFixed(1)}%)</span>
+              </span>
+            `;
+            fragType.appendChild(div);
+          });
+          byTypeBox.appendChild(fragType);
+        }
+
+        setReportStatus(`تم تحميل التقرير بنجاح. عدد السجلات: ${total}`, "ok");
+      } catch (err) {
+        console.error(err);
+        setReportStatus("تعذر الاتصال بالسيرفر. تأكد من رابط API.", "error");
+      }
+    }
+
+    btnLoadReport.addEventListener("click", () => loadReport(true));
+
+    btnClearFilters.addEventListener("click", () => {
+      filterMonth.value = "";
+      filterStore.value = "";
+      filterErrorType.value = "";
+      filterExecutor.value = "";
+      filterRecordedBy.value = "";
+      loadReport(true);
+    });
+
+    // تحميل تقرير الشهر الحالي عند فتح الصفحة
+    window.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      filterMonth.value = `${y}-${m}`;
+      loadReport(false);
+    });
+  </script>
+</body>
+</html>
