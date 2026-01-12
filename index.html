@@ -105,7 +105,6 @@
 
     <div class="msg" id="loginMsg"></div>
   </div>
-
   <!-- ✅ ملف الإعدادات المشترك -->
   <script src="config.js"></script>
 
@@ -157,25 +156,33 @@
           return;
         }
 
-        // حفظ بيانات المستخدم في localStorage لاستخدامها في باقي الواجهات
+        // 🔹 تجهيز بيانات الموظف (موحّدة لكل الواجهات)
         const user = {
           employeeCode: result.employeeCode,
           name: result.name,
           role: result.role,
+          username: result.username || username
         };
+
+        // ✅ حفظها في employeeData (الرئيسي) + taskUser (توافق مع القديم)
+        localStorage.setItem("employeeData", JSON.stringify(user));
         localStorage.setItem("taskUser", JSON.stringify(user));
 
         msgEl.style.color = "#16a34a";
         msgEl.textContent = "تم تسجيل الدخول بنجاح...";
 
-        // توجيه حسب الصلاحيات
+        // ✅ توجيه حسب الصلاحيات
         const roleText = (result.role || "").toString().toUpperCase();
+
         if (roleText.includes("ADMIN")) {
           window.location.href = "admin.html";
         } else if (roleText.includes("AUDITOR")) {
           window.location.href = "auditor.html";
         } else if (roleText.includes("EVALUATOR")) {
           window.location.href = "evaluator.html";
+        } else if (roleText.includes("SUPPORT")) {
+          // حسابات الدعم الفني تذهب مباشرة لواجهة الدعم
+          window.location.href = "support.html";
         } else {
           // افتراضيًا الموظف
           window.location.href = "employee.html";
@@ -193,5 +200,6 @@
       .getElementById("loginForm")
       .addEventListener("submit", doLogin);
   </script>
+
 </body>
 </html>
